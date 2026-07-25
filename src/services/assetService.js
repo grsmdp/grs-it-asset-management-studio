@@ -400,16 +400,10 @@ export async function getDashboardStats() {
   const today = new Date().toISOString().slice(0, 10);
   const thirtyDaysLater = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
 
-  const [
-    { count: totalAssets },
-    { count: activeAssets },
-    { count: repairAssets },
-    { count: spareAssets },
-    { count: scrappedAssets },
-    { count: warrantyExpiring },
-    { count: movementCount },
-    { count: maintenanceCount },
-  ] = await Promise.all([
+  const getCount = (result) =>
+    result.status === "fulfilled" ? result.value?.count || 0 : 0;
+
+  const results = await Promise.allSettled([
     supabase.from("assets").select("*", { count: "exact", head: true }),
     supabase
       .from("assets")
@@ -442,14 +436,14 @@ export async function getDashboardStats() {
   ]);
 
   return {
-    totalAssets: totalAssets || 0,
-    activeAssets: activeAssets || 0,
-    repairAssets: repairAssets || 0,
-    spareAssets: spareAssets || 0,
-    scrappedAssets: scrappedAssets || 0,
-    warrantyExpiring: warrantyExpiring || 0,
-    movementCount: movementCount || 0,
-    maintenanceCount: maintenanceCount || 0,
+    totalAssets: getCount(results[0]),
+    activeAssets: getCount(results[1]),
+    repairAssets: getCount(results[2]),
+    spareAssets: getCount(results[3]),
+    scrappedAssets: getCount(results[4]),
+    warrantyExpiring: getCount(results[5]),
+    movementCount: getCount(results[6]),
+    maintenanceCount: getCount(results[7]),
   };
 }
 

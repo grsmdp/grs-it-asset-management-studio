@@ -23,7 +23,6 @@ function App() {
   const [viewingTicketId, setViewingTicketId] = useState(null)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [showUpdateBanner, setShowUpdateBanner] = useState(false)
-  const [waitingWorker, setWaitingWorker] = useState(null)
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
