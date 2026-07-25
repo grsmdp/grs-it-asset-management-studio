@@ -1,6 +1,46 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { getReportSummary } from "../services/assetService";
-import { getStatusBadgeClass } from "../utils/statusBadge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Download,
+  Printer,
+  RefreshCw,
+  Package,
+  ArrowUpDown,
+  Wrench,
+} from "lucide-react";
+
+function getStatusBadgeClasses(status) {
+  switch (status) {
+    case "Active":
+    case "Completed":
+      return "bg-green-100 text-green-800 border-green-200 hover:bg-green-100";
+    case "Under Repair":
+    case "In Progress":
+      return "bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-100";
+    case "Spare":
+      return "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100";
+    case "Scrapped":
+      return "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-100";
+    case "Scheduled":
+      return "bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-100";
+    default:
+      return "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-100";
+  }
+}
 
 function Reports() {
   const [report, setReport] = useState(null);
@@ -138,117 +178,131 @@ function Reports() {
     window.print();
   }
 
+  function handleTabChange(value) {
+    setActiveTab(value);
+    setSearch("");
+    setStatusFilter("");
+    setCategoryFilter("");
+    setLocationFilter("");
+  }
+
   if (loading) {
     return (
-      <div className="page-panel">
-        <div className="text-center py-5">
-          <div className="spinner-border text-primary" role="status" />
-          <p className="mt-2 text-muted">Generating reports...</p>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-9 w-28" />
+            <Skeleton className="h-9 w-24" />
+            <Skeleton className="h-9 w-24" />
+          </div>
         </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-[72px] rounded-lg" />
+          ))}
+        </div>
+        <Skeleton className="h-[400px] rounded-lg" />
       </div>
     );
   }
 
   if (!report) return null;
 
-  const tabs = [
-    { id: "assets", label: "Assets", icon: "bi-pc-display", count: filteredAssets.length },
-    { id: "movements", label: "Movements", icon: "bi-arrow-left-right", count: filteredMovements.length },
-    { id: "maintenance", label: "Maintenance", icon: "bi-tools", count: filteredMaintenance.length },
-  ];
+  const assetStatuses = ["Active", "Spare", "Under Repair", "Scrapped"];
 
   const statusCounts = {};
-  const assetStatuses = ["Active", "Spare", "Under Repair", "Scrapped"];
   assetStatuses.forEach((s) => {
     statusCounts[s] = report.statusBreakdown[s] || 0;
   });
 
   return (
-    <div className="page-panel report-page">
-      <div className="page-panel-header d-print-none">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between print:hidden">
         <div>
-          <h2 className="mb-0">Reports</h2>
-          <small className="text-muted">
+          <h2 className="text-2xl font-bold tracking-tight">Reports</h2>
+          <p className="text-sm text-muted-foreground">
             Asset inventory summary and operational insights
-          </small>
+          </p>
         </div>
-
-        <div className="d-flex gap-2">
-          <button className="btn btn-sm btn-outline-success" onClick={handleExport}>
-            <i className="bi bi-download me-1" />
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleExport}>
+            <Download className="mr-1 h-4 w-4" />
             Export CSV
-          </button>
-          <button className="btn btn-sm btn-outline-primary" onClick={handlePrint}>
-            <i className="bi bi-printer me-1" />
+          </Button>
+          <Button variant="outline" size="sm" onClick={handlePrint}>
+            <Printer className="mr-1 h-4 w-4" />
             Print
-          </button>
-          <button className="btn btn-sm btn-outline-secondary" onClick={loadReport}>
-            <i className="bi bi-arrow-clockwise me-1" />
+          </Button>
+          <Button variant="outline" size="sm" onClick={loadReport}>
+            <RefreshCw className="mr-1 h-4 w-4" />
             Refresh
-          </button>
+          </Button>
         </div>
       </div>
 
-      <section className="row g-2 mb-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {[
-          { label: "Total Assets", value: report.assets.length, color: "primary" },
-          { label: "Active", value: statusCounts.Active, color: "success" },
-          { label: "Under Repair", value: statusCounts["Under Repair"], color: "warning" },
-          { label: "Spare", value: statusCounts.Spare, color: "info" },
-          { label: "Scrapped", value: statusCounts.Scrapped, color: "secondary" },
-          { label: "Total Value", value: `₹${report.totalValue.toLocaleString()}`, color: "danger" },
+          { label: "Total Assets", value: report.assets.length, color: "border-l-blue-500" },
+          { label: "Active", value: statusCounts.Active, color: "border-l-green-500" },
+          { label: "Under Repair", value: statusCounts["Under Repair"], color: "border-l-yellow-500" },
+          { label: "Spare", value: statusCounts.Spare, color: "border-l-cyan-500" },
+          { label: "Scrapped", value: statusCounts.Scrapped, color: "border-l-gray-400" },
+          { label: "Total Value", value: `₹${report.totalValue.toLocaleString()}`, color: "border-l-red-500" },
         ].map((card) => (
-          <div className="col-xl-2 col-md-4 col-6" key={card.label}>
-            <div className={`card border-0 shadow-sm h-100 border-start border-3 border-${card.color}`}>
-              <div className="card-body py-2 px-3">
-                <div className="text-muted" style={{ fontSize: "0.8rem" }}>{card.label}</div>
-                <h5 className="mb-0">{card.value}</h5>
-              </div>
-            </div>
-          </div>
+          <Card key={card.label} className={`border-0 shadow-sm border-l-4 ${card.color}`}>
+            <CardContent className="p-3">
+              <p className="text-xs text-muted-foreground">{card.label}</p>
+              <p className="text-lg font-bold">{card.value}</p>
+            </CardContent>
+          </Card>
         ))}
-      </section>
+      </div>
 
-      <div className="row g-3">
-        <div className="col-lg-8">
-          <div className="card border-0 shadow-sm">
-            <div className="card-body">
-              <ul className="nav nav-tabs mb-2">
-                {tabs.map((tab) => (
-                  <li className="nav-item" key={tab.id}>
-                    <button
-                      className={`nav-link ${activeTab === tab.id ? "active" : ""}`}
-                      onClick={() => {
-                        setActiveTab(tab.id);
-                        setSearch("");
-                        setStatusFilter("");
-                        setCategoryFilter("");
-                        setLocationFilter("");
-                      }}
-                    >
-                      <i className={`bi ${tab.icon} me-1`} />
-                      {tab.label}
-                      <span className="badge bg-secondary ms-1">{tab.count}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-4">
+              <Tabs value={activeTab} onValueChange={handleTabChange}>
+                <TabsList className="mb-4">
+                  <TabsTrigger value="assets" className="gap-1">
+                    <Package className="h-4 w-4" />
+                    Assets
+                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                      {filteredAssets.length}
+                    </Badge>
+                  </TabsTrigger>
+                  <TabsTrigger value="movements" className="gap-1">
+                    <ArrowUpDown className="h-4 w-4" />
+                    Movements
+                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                      {filteredMovements.length}
+                    </Badge>
+                  </TabsTrigger>
+                  <TabsTrigger value="maintenance" className="gap-1">
+                    <Wrench className="h-4 w-4" />
+                    Maintenance
+                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                      {filteredMaintenance.length}
+                    </Badge>
+                  </TabsTrigger>
+                </TabsList>
 
-              <div className="d-flex gap-2 mb-2 flex-wrap d-print-none">
-                <input
-                  className="form-control form-control-sm"
-                  placeholder="Search..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  style={{ width: 170 }}
-                />
-                {activeTab === "assets" && (
-                  <>
+                <TabsContent value="assets" className="mt-0 space-y-3">
+                  <div className="flex gap-2 flex-wrap print:hidden">
+                    <Input
+                      placeholder="Search..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="h-9 w-[170px]"
+                    />
                     <select
-                      className="form-select form-select-sm"
+                      className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      style={{ width: 130 }}
                     >
                       <option value="">All Status</option>
                       {assetStatuses.map((s) => (
@@ -256,10 +310,9 @@ function Reports() {
                       ))}
                     </select>
                     <select
-                      className="form-select form-select-sm"
+                      className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                       value={categoryFilter}
                       onChange={(e) => setCategoryFilter(e.target.value)}
-                      style={{ width: 140 }}
                     >
                       <option value="">All Categories</option>
                       {report.categories.map((c) => (
@@ -267,181 +320,215 @@ function Reports() {
                       ))}
                     </select>
                     <select
-                      className="form-select form-select-sm"
+                      className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                       value={locationFilter}
                       onChange={(e) => setLocationFilter(e.target.value)}
-                      style={{ width: 140 }}
                     >
                       <option value="">All Locations</option>
                       {report.locations.map((l) => (
                         <option key={l.id} value={l.id}>{l.location_name}</option>
                       ))}
                     </select>
-                  </>
-                )}
-                {activeTab === "maintenance" && (
-                  <select
-                    className="form-select form-select-sm"
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    style={{ width: 130 }}
-                  >
-                    <option value="">All Status</option>
-                    <option value="Scheduled">Scheduled</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Cancelled">Cancelled</option>
-                  </select>
-                )}
-              </div>
+                  </div>
 
-              <div className="table-responsive">
-                {activeTab === "assets" && (
-                  <table className="table table-sm table-hover align-middle mb-0">
-                    <thead className="table-light">
-                      <tr>
-                        <th>Code</th>
-                        <th>Name</th>
-                        <th>Category</th>
-                        <th>Location</th>
-                        <th>Department</th>
-                        <th>Status</th>
-                        <th>Cost</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredAssets.length === 0 ? (
-                        <tr><td colSpan="7" className="text-center py-3 text-muted">No assets found</td></tr>
-                      ) : (
-                        filteredAssets.map((a) => (
-                          <tr key={a.id}>
-                            <td className="fw-semibold">{a.asset_code}</td>
-                            <td>{a.asset_name}</td>
-                            <td>{report.categories.find((c) => c.id === a.category_id)?.category_name || "-"}</td>
-                            <td>{report.locations.find((l) => l.id === a.current_location_id)?.location_name || "-"}</td>
-                            <td>{report.departments.find((d) => d.id === a.department_id)?.department_name || "-"}</td>
-                            <td><span className={`badge ${getStatusBadgeClass(a.status)}`}>{a.status}</span></td>
-                            <td>{a.purchase_cost != null ? `₹${Number(a.purchase_cost).toLocaleString()}` : "-"}</td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                )}
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Code</TableHead>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Category</TableHead>
+                          <TableHead>Location</TableHead>
+                          <TableHead>Department</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="text-right">Cost</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredAssets.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                              No assets found
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          filteredAssets.map((a) => (
+                            <TableRow key={a.id}>
+                              <TableCell className="font-medium">{a.asset_code}</TableCell>
+                              <TableCell>{a.asset_name}</TableCell>
+                              <TableCell>{report.categories.find((c) => c.id === a.category_id)?.category_name || "-"}</TableCell>
+                              <TableCell>{report.locations.find((l) => l.id === a.current_location_id)?.location_name || "-"}</TableCell>
+                              <TableCell>{report.departments.find((d) => d.id === a.department_id)?.department_name || "-"}</TableCell>
+                              <TableCell>
+                                <Badge className={getStatusBadgeClasses(a.status)}>{a.status}</Badge>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {a.purchase_cost != null ? `₹${Number(a.purchase_cost).toLocaleString()}` : "-"}
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </TabsContent>
 
-                {activeTab === "movements" && (
-                  <table className="table table-sm table-hover align-middle mb-0">
-                    <thead className="table-light">
-                      <tr>
-                        <th>Date</th>
-                        <th>Asset</th>
-                        <th>From</th>
-                        <th>To</th>
-                        <th>Reason</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredMovements.length === 0 ? (
-                        <tr><td colSpan="5" className="text-center py-3 text-muted">No movement records</td></tr>
-                      ) : (
-                        filteredMovements.map((m) => (
-                          <tr key={m.id}>
-                            <td>{m.movement_date || "-"}</td>
-                            <td>{report.assets.find((a) => a.id === m.asset_id)?.asset_code || m.asset_id}</td>
-                            <td>{report.locations.find((l) => l.id === m.from_location_id)?.location_name || "-"}</td>
-                            <td>{report.locations.find((l) => l.id === m.to_location_id)?.location_name || "-"}</td>
-                            <td>{m.reason || m.remarks || "-"}</td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                )}
+                <TabsContent value="movements" className="mt-0 space-y-3">
+                  <div className="flex gap-2 flex-wrap print:hidden">
+                    <Input
+                      placeholder="Search..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="h-9 w-[170px]"
+                    />
+                  </div>
 
-                {activeTab === "maintenance" && (
-                  <table className="table table-sm table-hover align-middle mb-0">
-                    <thead className="table-light">
-                      <tr>
-                        <th>Type</th>
-                        <th>Status</th>
-                        <th>Cost</th>
-                        <th>Remarks</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredMaintenance.length === 0 ? (
-                        <tr><td colSpan="4" className="text-center py-3 text-muted">No maintenance records</td></tr>
-                      ) : (
-                        filteredMaintenance.map((m) => (
-                          <tr key={m.id}>
-                            <td>{m.maintenance_type}</td>
-                            <td><span className={`badge ${getStatusBadgeClass(m.status)}`}>{m.status}</span></td>
-                            <td>{m.cost != null ? `₹${Number(m.cost).toLocaleString()}` : "-"}</td>
-                            <td>{m.remarks || "-"}</td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            </div>
-          </div>
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Asset</TableHead>
+                          <TableHead>From</TableHead>
+                          <TableHead>To</TableHead>
+                          <TableHead>Reason</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredMovements.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                              No movement records
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          filteredMovements.map((m) => (
+                            <TableRow key={m.id}>
+                              <TableCell>{m.movement_date || "-"}</TableCell>
+                              <TableCell>{report.assets.find((a) => a.id === m.asset_id)?.asset_code || m.asset_id}</TableCell>
+                              <TableCell>{report.locations.find((l) => l.id === m.from_location_id)?.location_name || "-"}</TableCell>
+                              <TableCell>{report.locations.find((l) => l.id === m.to_location_id)?.location_name || "-"}</TableCell>
+                              <TableCell>{m.reason || m.remarks || "-"}</TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="maintenance" className="mt-0 space-y-3">
+                  <div className="flex gap-2 flex-wrap print:hidden">
+                    <Input
+                      placeholder="Search..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="h-9 w-[170px]"
+                    />
+                    <select
+                      className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                    >
+                      <option value="">All Status</option>
+                      <option value="Scheduled">Scheduled</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
+                  </div>
+
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="text-right">Cost</TableHead>
+                          <TableHead>Remarks</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredMaintenance.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                              No maintenance records
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          filteredMaintenance.map((m) => (
+                            <TableRow key={m.id}>
+                              <TableCell>{m.maintenance_type}</TableCell>
+                              <TableCell>
+                                <Badge className={getStatusBadgeClasses(m.status)}>{m.status}</Badge>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {m.cost != null ? `₹${Number(m.cost).toLocaleString()}` : "-"}
+                              </TableCell>
+                              <TableCell>{m.remarks || "-"}</TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="col-lg-4">
-          <div className="card border-0 shadow-sm mb-3">
-            <div className="card-body">
-              <h6 className="section-title">Status Breakdown</h6>
-              <div className="table-responsive">
-                <table className="table table-sm align-middle">
-                  <thead className="table-light">
-                    <tr><th>Status</th><th>Count</th></tr>
-                  </thead>
-                  <tbody>
+        <div className="space-y-6">
+          <Card className="border-0 shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold">Status Breakdown</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Count</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {Object.entries(report.statusBreakdown).map(([status, count]) => (
-                      <tr key={status}>
-                        <td><span className={`badge ${getStatusBadgeClass(status)}`}>{status}</span></td>
-                        <td>{count}</td>
-                      </tr>
+                      <TableRow key={status}>
+                        <TableCell>
+                          <Badge className={getStatusBadgeClasses(status)}>{status}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">{count}</TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <div className="card border-0 shadow-sm">
-            <div className="card-body">
-              <h6 className="section-title">Operational Summary</h6>
-              <ul className="list-group list-group-flush">
-                <li className="list-group-item d-flex justify-content-between py-2">
-                  <span>Total Movements</span>
-                  <strong>{report.movements.length}</strong>
-                </li>
-                <li className="list-group-item d-flex justify-content-between py-2">
-                  <span>Maintenance Records</span>
-                  <strong>{report.maintenance.length}</strong>
-                </li>
-                <li className="list-group-item d-flex justify-content-between py-2">
-                  <span>Categories</span>
-                  <strong>{report.categories.length}</strong>
-                </li>
-                <li className="list-group-item d-flex justify-content-between py-2">
-                  <span>Locations</span>
-                  <strong>{report.locations.length}</strong>
-                </li>
-                <li className="list-group-item d-flex justify-content-between py-2">
-                  <span>Departments</span>
-                  <strong>{report.departments.length}</strong>
-                </li>
-                <li className="list-group-item d-flex justify-content-between py-2">
-                  <span>Vendors</span>
-                  <strong>{report.vendors.length}</strong>
-                </li>
-              </ul>
-            </div>
-          </div>
+          <Card className="border-0 shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold">Operational Summary</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="divide-y">
+                {[
+                  { label: "Total Movements", value: report.movements.length },
+                  { label: "Maintenance Records", value: report.maintenance.length },
+                  { label: "Categories", value: report.categories.length },
+                  { label: "Locations", value: report.locations.length },
+                  { label: "Departments", value: report.departments.length },
+                  { label: "Vendors", value: report.vendors.length },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center justify-between px-4 py-2.5">
+                    <span className="text-sm text-muted-foreground">{item.label}</span>
+                    <span className="text-sm font-semibold">{item.value}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

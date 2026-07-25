@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { loadMasterData } from "../services/assetService";
 import AssetForm from "./AssetForm";
+import { Loader2 } from "lucide-react";
 
 function AddAsset({ setCurrentPage }) {
   const [categories, setCategories] = useState([]);
@@ -31,10 +32,10 @@ function AddAsset({ setCurrentPage }) {
 
   if (loading) {
     return (
-      <div className="page-panel">
-        <div className="text-center py-5">
-          <div className="spinner-border text-primary" role="status" />
-          <p className="mt-3 text-muted">Loading master data...</p>
+      <div className="space-y-6">
+        <div className="flex flex-col items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="mt-3 text-sm text-muted-foreground">Loading master data...</p>
         </div>
       </div>
     );

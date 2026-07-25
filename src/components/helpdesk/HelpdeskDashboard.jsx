@@ -1,5 +1,24 @@
 import { useEffect, useState } from "react";
 import { getTicketStats, getTicketChartData } from "../../services/helpdeskService";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import {
+  FolderOpen,
+  UserCheck,
+  Loader2,
+  CheckCircle,
+  AlertTriangle,
+  Archive,
+  Plus,
+  List,
+  User,
+  BarChart3,
+  RefreshCw,
+  Users,
+} from "lucide-react";
 
 function HelpdeskDashboard({ setCurrentPage }) {
   const [stats, setStats] = useState(null);
@@ -29,179 +48,188 @@ function HelpdeskDashboard({ setCurrentPage }) {
 
   if (loading) {
     return (
-      <div className="page-panel">
-        <div className="text-center py-5">
-          <div className="spinner-border text-primary" role="status" />
-          <p className="mt-2 text-muted">Loading helpdesk dashboard...</p>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <Skeleton className="h-8 w-64 mb-2" />
+            <Skeleton className="h-4 w-48" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-20 rounded-lg" />
+          ))}
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-24 rounded-lg" />
+          ))}
         </div>
       </div>
     );
   }
 
   const statCards = [
-    { label: "Open Tickets", value: stats.openCount, icon: "bi-folder2-open", bgClass: "bg-primary-subtle text-primary", page: "allTickets" },
-    { label: "Assigned", value: stats.assignedCount, icon: "bi-person-check", bgClass: "bg-info-subtle text-info", page: "allTickets" },
-    { label: "In Progress", value: stats.inProgressCount, icon: "bi-gear", bgClass: "bg-warning-subtle text-warning", page: "allTickets" },
-    { label: "Completed Today", value: stats.completedToday, icon: "bi-check-circle", bgClass: "bg-success-subtle text-success", page: "allTickets" },
-    { label: "Critical", value: stats.criticalCount, icon: "bi-exclamation-triangle", bgClass: "bg-danger-subtle text-danger", page: "allTickets" },
-    { label: "Closed (Month)", value: stats.closedThisMonth, icon: "bi-archive", bgClass: "bg-secondary-subtle text-secondary", page: "allTickets" },
+    { label: "Open Tickets", value: stats.openCount, icon: FolderOpen, color: "text-blue-600", bg: "bg-blue-50", page: "allTickets" },
+    { label: "Assigned", value: stats.assignedCount, icon: UserCheck, color: "text-cyan-600", bg: "bg-cyan-50", page: "allTickets" },
+    { label: "In Progress", value: stats.inProgressCount, icon: Loader2, color: "text-yellow-600", bg: "bg-yellow-50", page: "allTickets" },
+    { label: "Completed Today", value: stats.completedToday, icon: CheckCircle, color: "text-green-600", bg: "bg-green-50", page: "allTickets" },
+    { label: "Critical", value: stats.criticalCount, icon: AlertTriangle, color: "text-red-600", bg: "bg-red-50", page: "allTickets" },
+    { label: "Closed (Month)", value: stats.closedThisMonth, icon: Archive, color: "text-gray-600", bg: "bg-gray-50", page: "allTickets" },
   ];
 
   const quickActions = [
-    { label: "New Ticket", icon: "bi-plus-circle", color: "primary", page: "newTicket", desc: "Create a new helpdesk ticket" },
-    { label: "All Tickets", icon: "bi-list-ul", color: "info", page: "allTickets", desc: "View all helpdesk tickets" },
-    { label: "My Tickets", icon: "bi-person-lines-fill", color: "warning", page: "myTickets", desc: "Tickets assigned to me" },
-    { label: "Reports", icon: "bi-bar-chart", color: "success", page: "helpdeskReports", desc: "Ticket analytics & reports" },
+    { label: "New Ticket", icon: Plus, color: "text-blue-600 bg-blue-50", page: "newTicket", desc: "Create a new helpdesk ticket" },
+    { label: "All Tickets", icon: List, color: "text-cyan-600 bg-cyan-50", page: "allTickets", desc: "View all helpdesk tickets" },
+    { label: "My Tickets", icon: User, color: "text-yellow-600 bg-yellow-50", page: "myTickets", desc: "Tickets assigned to me" },
+    { label: "Reports", icon: BarChart3, color: "text-green-600 bg-green-50", page: "helpdeskReports", desc: "Ticket analytics & reports" },
   ];
 
   const priorityColors = {
-    Critical: "danger",
-    High: "warning",
-    Medium: "info",
-    Low: "secondary",
+    Critical: "destructive",
+    High: "default",
+    Medium: "secondary",
+    Low: "outline",
   };
 
   return (
-    <div className="page-panel">
-      <div className="page-panel-header">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h2 className="mb-0">Helpdesk Dashboard</h2>
-          <small className="text-muted">
+          <h2 className="text-2xl font-bold">Helpdesk Dashboard</h2>
+          <p className="text-sm text-muted-foreground">
             IT support ticket overview and analytics
-          </small>
+          </p>
         </div>
-        <button className="btn btn-sm btn-outline-success" onClick={loadDashboard}>
-          <i className="bi bi-arrow-clockwise me-1" />
+        <Button variant="outline" size="sm" onClick={loadDashboard}>
+          <RefreshCw className="mr-1 h-4 w-4" />
           Refresh
-        </button>
+        </Button>
       </div>
 
-      <section className="row g-3 mb-3">
-        {statCards.map((card) => (
-          <div className="col-xl-2 col-md-4 col-6" key={card.label}>
-            <div
-              className="card border-0 shadow-sm h-100"
-              role="button"
+      <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {statCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <Card
+              key={card.label}
+              className="border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
               onClick={() => setCurrentPage(card.page)}
             >
-              <div className="card-body d-flex align-items-center gap-2 py-2">
-                <div
-                  className={`rounded d-flex align-items-center justify-content-center flex-shrink-0 ${card.bgClass}`}
-                  style={{ width: 40, height: 40, fontSize: 17 }}
-                >
-                  <i className={`bi ${card.icon}`} />
+              <CardContent className="flex items-center gap-3 py-3 px-4">
+                <div className={`flex items-center justify-center rounded-lg ${card.bg} ${card.color} shrink-0`} style={{ width: 40, height: 40 }}>
+                  <Icon className="h-5 w-5" />
                 </div>
                 <div>
-                  <div className="text-muted" style={{ fontSize: "0.8rem" }}>
-                    {card.label}
-                  </div>
-                  <h4 className="mb-0 lh-1">{card.value}</h4>
+                  <p className="text-xs text-muted-foreground">{card.label}</p>
+                  <p className="text-xl font-bold leading-tight">{card.value}</p>
                 </div>
-              </div>
-            </div>
-          </div>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </section>
 
-      <section className="mb-3">
-        <div className="d-flex justify-content-between align-items-center mb-2">
-          <h6 className="section-title mb-0">Quick Actions</h6>
-        </div>
-        <div className="row g-2">
-          {quickActions.map((action) => (
-            <div className="col-xl-3 col-md-6" key={action.label}>
+      <section>
+        <h6 className="text-sm font-semibold mb-2">Quick Actions</h6>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {quickActions.map((action) => {
+            const Icon = action.icon;
+            return (
               <button
-                className="card border-0 shadow-sm h-100 text-start w-100 quick-action-card"
+                key={action.label}
+                className="card border-0 shadow-sm h-100 text-start w-100 hover:shadow-md transition-shadow rounded-lg"
                 onClick={() => setCurrentPage(action.page)}
               >
-                <div className="card-body py-2 px-3">
-                  <div
-                    className={`rounded d-inline-flex align-items-center justify-content-center bg-${action.color}-subtle text-${action.color} mb-1`}
-                    style={{ width: 34, height: 34, fontSize: 16 }}
-                  >
-                    <i className={`bi ${action.icon}`} />
+                <div className="py-3 px-4">
+                  <div className={`inline-flex items-center justify-center rounded-lg ${action.color} mb-2`} style={{ width: 34, height: 34 }}>
+                    <Icon className="h-5 w-5" />
                   </div>
-                  <h6 className="mb-0">{action.label}</h6>
-                  <small className="text-muted">{action.desc}</small>
+                  <h6 className="text-sm font-semibold mb-0">{action.label}</h6>
+                  <p className="text-xs text-muted-foreground">{action.desc}</p>
                 </div>
               </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
       {chartData && (
-        <section className="row g-3">
-          <div className="col-md-6">
-            <div className="card border-0 shadow-sm">
-              <div className="card-body">
-                <h6 className="section-title">Tickets by Priority</h6>
-                {Object.keys(chartData.byPriority).length === 0 ? (
-                  <p className="text-muted small mb-0">No data</p>
-                ) : (
-                  <div className="table-responsive">
-                    <table className="table table-sm align-middle mb-0">
-                      <thead className="table-light">
-                        <tr><th>Priority</th><th>Count</th><th className="w-50">Distribution</th></tr>
-                      </thead>
-                      <tbody>
-                        {Object.entries(chartData.byPriority).map(([pri, count]) => {
-                          const total = Object.values(chartData.byPriority).reduce((s, v) => s + v, 0);
-                          const pct = total > 0 ? Math.round((count / total) * 100) : 0;
-                          return (
-                            <tr key={pri}>
-                              <td>
-                                <span className={`badge bg-${priorityColors[pri] || "secondary"}`}>{pri}</span>
-                              </td>
-                              <td>{count}</td>
-                              <td>
-                                <div className="progress" style={{ height: 6 }}>
-                                  <div
-                                    className={`progress-bar bg-${priorityColors[pri] || "secondary"}`}
-                                    style={{ width: `${pct}%` }}
-                                  />
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card className="border-0 shadow-sm">
+            <CardContent className="pt-6">
+              <h6 className="text-sm font-semibold mb-3">Tickets by Priority</h6>
+              {Object.keys(chartData.byPriority).length === 0 ? (
+                <p className="text-sm text-muted-foreground">No data</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Priority</TableHead>
+                      <TableHead>Count</TableHead>
+                      <TableHead className="w-1/2">Distribution</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {Object.entries(chartData.byPriority).map(([pri, count]) => {
+                      const total = Object.values(chartData.byPriority).reduce((s, v) => s + v, 0);
+                      const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                      return (
+                        <TableRow key={pri}>
+                          <TableCell>
+                            <Badge variant={priorityColors[pri] || "secondary"}>{pri}</Badge>
+                          </TableCell>
+                          <TableCell>{count}</TableCell>
+                          <TableCell>
+                            <div className="w-full bg-gray-100 rounded-full h-1.5">
+                              <div
+                                className={`h-1.5 rounded-full ${
+                                  pri === "Critical" ? "bg-red-500" :
+                                  pri === "High" ? "bg-orange-500" :
+                                  pri === "Medium" ? "bg-blue-500" :
+                                  "bg-gray-400"
+                                }`}
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
 
-          <div className="col-md-6">
-            <div className="card border-0 shadow-sm">
-              <div className="card-body">
-                <h6 className="section-title">Tickets by Engineer</h6>
-                {Object.keys(chartData.byEngineer).length === 0 ? (
-                  <p className="text-muted small mb-0">No data</p>
-                ) : (
-                  <div className="table-responsive">
-                    <table className="table table-sm align-middle mb-0">
-                      <thead className="table-light">
-                        <tr><th>Engineer</th><th>Tickets</th></tr>
-                      </thead>
-                      <tbody>
-                        {Object.entries(chartData.byEngineer)
-                          .sort((a, b) => b[1] - a[1])
-                          .slice(0, 8)
-                          .map(([eng, count]) => (
-                            <tr key={eng}>
-                              <td>{eng}</td>
-                              <td>{count}</td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+          <Card className="border-0 shadow-sm">
+            <CardContent className="pt-6">
+              <h6 className="text-sm font-semibold mb-3">Tickets by Engineer</h6>
+              {Object.keys(chartData.byEngineer).length === 0 ? (
+                <p className="text-sm text-muted-foreground">No data</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Engineer</TableHead>
+                      <TableHead>Tickets</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {Object.entries(chartData.byEngineer)
+                      .sort((a, b) => b[1] - a[1])
+                      .slice(0, 8)
+                      .map(([eng, count]) => (
+                        <TableRow key={eng}>
+                          <TableCell>{eng}</TableCell>
+                          <TableCell>{count}</TableCell>
+                        </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
         </section>
       )}
     </div>

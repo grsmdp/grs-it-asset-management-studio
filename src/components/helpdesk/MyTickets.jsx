@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { getTickets } from "../../services/helpdeskService";
 import { getStatusBadgeClass } from "../../utils/statusBadge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Plus, RefreshCw, Eye, Pencil, User } from "lucide-react";
 
 function MyTickets({ setCurrentPage, setViewingTicketId }) {
   const [tickets, setTickets] = useState([]);
@@ -53,165 +60,173 @@ function MyTickets({ setCurrentPage, setViewingTicketId }) {
     });
   }, [tickets, search, statusFilter]);
 
-  function getPriorityBadgeClass(priority) {
+  function getPriorityBadgeVariant(priority) {
     switch (priority) {
-      case "Critical": return "bg-danger";
-      case "High": return "bg-warning text-dark";
-      case "Medium": return "bg-info text-dark";
-      case "Low": return "bg-secondary";
-      default: return "bg-secondary";
+      case "Critical": return "destructive";
+      case "High": return "default";
+      case "Medium": return "secondary";
+      case "Low": return "outline";
+      default: return "outline";
+    }
+  }
+
+  function getPriorityColor(priority) {
+    switch (priority) {
+      case "Critical": return "text-red-600";
+      case "High": return "text-orange-500";
+      case "Medium": return "text-yellow-600";
+      case "Low": return "text-green-600";
+      default: return "text-gray-600";
     }
   }
 
   if (!myEngineer && !editMode) {
     return (
-      <div className="page-panel">
-        <div className="page-panel-header">
-          <div>
-            <h2 className="mb-0">My Tickets</h2>
-            <small className="text-muted">Tickets assigned to you</small>
-          </div>
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold">My Tickets</h2>
+          <p className="text-sm text-muted-foreground">Tickets assigned to you</p>
         </div>
-        <div className="card border-0 shadow-sm">
-          <div className="card-body text-center py-5">
-            <div className="mb-3" style={{ fontSize: 40 }}>
-              <i className="bi bi-person-badge text-muted" />
+        <Card className="border-0 shadow-sm">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <div className="mb-3 text-muted-foreground">
+              <User className="h-10 w-10" />
             </div>
-            <h6>Set Your Engineer Name</h6>
-            <p className="text-muted mb-3" style={{ fontSize: "0.9rem" }}>
+            <h6 className="font-semibold">Set Your Engineer Name</h6>
+            <p className="text-sm text-muted-foreground mb-3">
               Enter your name to see tickets assigned to you
             </p>
-            <div className="d-flex justify-content-center gap-2">
-              <input
-                className="form-control form-control-sm"
+            <div className="flex gap-2">
+              <Input
                 value={engineerInput}
                 onChange={(e) => setEngineerInput(e.target.value)}
                 placeholder="Your name"
-                style={{ width: 220 }}
+                className="w-56"
                 onKeyDown={(e) => e.key === "Enter" && saveEngineer()}
               />
-              <button className="btn btn-sm btn-primary" onClick={saveEngineer}>
-                Save
-              </button>
+              <Button size="sm" onClick={saveEngineer}>Save</Button>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="page-panel">
-      <div className="page-panel-header">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h2 className="mb-0">My Tickets</h2>
-          <small className="text-muted">
+          <h2 className="text-2xl font-bold">My Tickets</h2>
+          <p className="text-sm text-muted-foreground">
             Assigned to: <strong>{myEngineer}</strong>{" "}
             <button
-              className="btn btn-sm btn-link p-0 ms-1"
+              className="text-muted-foreground hover:text-foreground ml-1 inline-flex items-center"
               onClick={() => setEditMode(true)}
             >
-              <i className="bi bi-pencil-square" />
+              <Pencil className="h-3.5 w-3.5" />
             </button>
             {editMode && (
               <>
-                <input
-                  className="form-control form-control-sm d-inline-block ms-2"
+                <Input
                   value={engineerInput}
                   onChange={(e) => setEngineerInput(e.target.value)}
-                  style={{ width: 150 }}
+                  className="inline-block w-36 h-7 ml-2 text-sm"
                 />
-                <button className="btn btn-sm btn-primary ms-1" onClick={saveEngineer}>OK</button>
+                <Button size="sm" className="ml-1" onClick={saveEngineer}>OK</Button>
               </>
             )}
-          </small>
+          </p>
         </div>
-        <div className="d-flex gap-2">
-          <button className="btn btn-sm btn-primary" onClick={() => setCurrentPage("newTicket")}>
-            <i className="bi bi-plus-circle me-1" />
+        <div className="flex gap-2">
+          <Button size="sm" onClick={() => setCurrentPage("newTicket")}>
+            <Plus className="mr-1 h-4 w-4" />
             New Ticket
-          </button>
-          <button className="btn btn-sm btn-outline-success" onClick={loadTickets}>
-            <i className="bi bi-arrow-clockwise" />
-          </button>
+          </Button>
+          <Button variant="outline" size="sm" onClick={loadTickets}>
+            <RefreshCw className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
-      <div className="card border-0 shadow-sm">
-        <div className="card-body">
-          <div className="d-flex gap-2 mb-2 flex-wrap">
-            <input
-              className="form-control form-control-sm"
+      <Card className="border-0 shadow-sm">
+        <CardContent className="pt-6">
+          <div className="flex gap-2 mb-4 flex-wrap">
+            <Input
               placeholder="Search..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{ width: 180 }}
+              className="w-44"
             />
-            <select
-              className="form-select form-select-sm"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              style={{ width: 140 }}
-            >
-              <option value="">All Status</option>
-              <option value="Open">Open</option>
-              <option value="Assigned">Assigned</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Waiting for Parts">Waiting for Parts</option>
-              <option value="Vendor Support">Vendor Support</option>
-              <option value="Completed">Completed</option>
-            </select>
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v)}>
+              <SelectTrigger className="w-36">
+                <SelectValue placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="Open">Open</SelectItem>
+                <SelectItem value="Assigned">Assigned</SelectItem>
+                <SelectItem value="In Progress">In Progress</SelectItem>
+                <SelectItem value="Waiting for Parts">Waiting for Parts</SelectItem>
+                <SelectItem value="Vendor Support">Vendor Support</SelectItem>
+                <SelectItem value="Completed">Completed</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="table-responsive">
-            <table className="table table-sm table-hover align-middle mb-0">
-              <thead className="table-light">
-                <tr>
-                  <th>Ticket #</th>
-                  <th>Title</th>
-                  <th>Requested By</th>
-                  <th>Priority</th>
-                  <th>Status</th>
-                  <th>Created</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
+          <div className="overflow-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Ticket #</TableHead>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Requested By</TableHead>
+                  <TableHead>Priority</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {loading ? (
-                  <tr><td colSpan="7" className="text-center py-3">Loading...</td></tr>
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-3">Loading...</TableCell>
+                  </TableRow>
                 ) : filtered.length === 0 ? (
-                  <tr><td colSpan="7" className="text-center py-3 text-muted">No tickets assigned to you</td></tr>
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-3 text-muted-foreground">No tickets assigned to you</TableCell>
+                  </TableRow>
                 ) : (
                   filtered.map((t) => (
-                    <tr key={t.id}>
-                      <td className="fw-semibold">{t.ticket_number}</td>
-                      <td style={{ maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {t.problem_title}
-                      </td>
-                      <td>{t.requested_by}</td>
-                      <td>
-                        <span className={`badge ${getPriorityBadgeClass(t.priority)}`}>{t.priority}</span>
-                      </td>
-                      <td>
-                        <span className={`badge ${getStatusBadgeClass(t.status)}`}>{t.status}</span>
-                      </td>
-                      <td>{t.created_at ? new Date(t.created_at).toLocaleDateString() : "-"}</td>
-                      <td>
-                        <button
-                          className="btn btn-sm btn-outline-primary"
+                    <TableRow key={t.id}>
+                      <TableCell className="font-semibold">{t.ticket_number}</TableCell>
+                      <TableCell className="max-w-[200px] truncate">{t.problem_title}</TableCell>
+                      <TableCell>{t.requested_by}</TableCell>
+                      <TableCell>
+                        <span className={getPriorityColor(t.priority)}>
+                          <Badge variant={getPriorityBadgeVariant(t.priority)}>{t.priority}</Badge>
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={getStatusBadgeClass(t.status)}>{t.status}</Badge>
+                      </TableCell>
+                      <TableCell>{t.created_at ? new Date(t.created_at).toLocaleDateString() : "-"}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => { setViewingTicketId(t.id); setCurrentPage("ticketDetail"); }}
                         >
-                          <i className="bi bi-eye" />
-                        </button>
-                      </td>
-                    </tr>
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
                   ))
                 )}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

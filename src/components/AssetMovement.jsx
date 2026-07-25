@@ -6,6 +6,21 @@ import {
   loadMasterData,
   updateAsset,
 } from "../services/assetService";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
+import { RefreshCw } from "lucide-react";
 
 function AssetMovement({ setCurrentPage }) {
   const [movements, setMovements] = useState([]);
@@ -141,33 +156,30 @@ function AssetMovement({ setCurrentPage }) {
   });
 
   return (
-    <div className="page-panel">
-      <div className="page-panel-header">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h2 className="mb-0">Asset Movement</h2>
-          <small className="text-muted">
+          <h2 className="text-2xl font-bold tracking-tight">Asset Movement</h2>
+          <p className="text-sm text-muted-foreground">
             Transfer assets between locations and track movement history
-          </small>
+          </p>
         </div>
-        <button
-          className="btn btn-sm btn-outline-primary"
-          onClick={() => setCurrentPage("assets")}
-        >
+        <Button variant="outline" size="sm" onClick={() => setCurrentPage("assets")}>
           View Assets
-        </button>
+        </Button>
       </div>
 
-      <div className="row g-3">
-        <div className="col-lg-4">
-          <div className="card border-0 shadow-sm">
-            <div className="card-body">
-              <h6 className="section-title">Record Movement</h6>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1">
+          <Card className="border-0 shadow-sm">
+            <CardContent className="pt-6">
+              <h6 className="text-sm font-semibold mb-4">Record Movement</h6>
 
-              <form onSubmit={handleSubmit} className="row g-2">
-                <div className="col-12">
-                  <label className="form-label">Asset</label>
+              <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-3">
+                <div className="space-y-2">
+                  <Label className="text-sm">Asset</Label>
                   <select
-                    className="form-select form-select-sm"
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring"
                     value={form.asset_id}
                     onChange={(e) => handleAssetChange(e.target.value)}
                   >
@@ -180,10 +192,10 @@ function AssetMovement({ setCurrentPage }) {
                   </select>
                 </div>
 
-                <div className="col-12">
-                  <label className="form-label">From Location</label>
+                <div className="space-y-2">
+                  <Label className="text-sm">From Location</Label>
                   <select
-                    className="form-select form-select-sm"
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring"
                     value={form.from_location_id}
                     onChange={(e) =>
                       setForm((prev) => ({
@@ -201,10 +213,10 @@ function AssetMovement({ setCurrentPage }) {
                   </select>
                 </div>
 
-                <div className="col-12">
-                  <label className="form-label">To Location</label>
+                <div className="space-y-2">
+                  <Label className="text-sm">To Location</Label>
                   <select
-                    className="form-select form-select-sm"
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring"
                     value={form.to_location_id}
                     onChange={(e) =>
                       setForm((prev) => ({
@@ -222,11 +234,10 @@ function AssetMovement({ setCurrentPage }) {
                   </select>
                 </div>
 
-                <div className="col-12">
-                  <label className="form-label">Movement Date</label>
-                  <input
+                <div className="space-y-2">
+                  <Label className="text-sm">Movement Date</Label>
+                  <Input
                     type="date"
-                    className="form-control form-control-sm"
                     value={form.movement_date}
                     onChange={(e) =>
                       setForm((prev) => ({
@@ -237,11 +248,10 @@ function AssetMovement({ setCurrentPage }) {
                   />
                 </div>
 
-                <div className="col-12">
-                  <label className="form-label">Reason</label>
-                  <input
+                <div className="space-y-2">
+                  <Label className="text-sm">Reason</Label>
+                  <Input
                     type="text"
-                    className="form-control form-control-sm"
                     value={form.reason}
                     onChange={(e) =>
                       setForm((prev) => ({ ...prev, reason: e.target.value }))
@@ -250,11 +260,10 @@ function AssetMovement({ setCurrentPage }) {
                   />
                 </div>
 
-                <div className="col-12">
-                  <label className="form-label">Remarks</label>
-                  <textarea
-                    className="form-control form-control-sm"
-                    rows="2"
+                <div className="space-y-2">
+                  <Label className="text-sm">Remarks</Label>
+                  <Textarea
+                    rows={2}
                     value={form.remarks}
                     onChange={(e) =>
                       setForm((prev) => ({ ...prev, remarks: e.target.value }))
@@ -262,93 +271,99 @@ function AssetMovement({ setCurrentPage }) {
                   />
                 </div>
 
-                <div className="col-12">
-                  <button
+                <div>
+                  <Button
                     type="submit"
-                    className="btn btn-sm btn-primary w-100"
+                    className="w-full"
+                    size="sm"
                     disabled={saving}
                   >
                     {saving ? "Saving..." : "Record Movement"}
-                  </button>
+                  </Button>
                 </div>
               </form>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="col-lg-8">
-          <div className="card border-0 shadow-sm">
-            <div className="card-body">
-              <div className="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-                <h6 className="section-title mb-0">
+        <div className="lg:col-span-2">
+          <Card className="border-0 shadow-sm">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                <h6 className="text-sm font-semibold">
                   Movement History ({filtered.length})
                 </h6>
-                <div className="d-flex gap-2">
-                  <input
-                    className="form-control form-control-sm"
+                <div className="flex items-center gap-2">
+                  <Input
                     placeholder="Search..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    style={{ width: 160 }}
+                    className="h-9 w-40"
                   />
-                  <button
-                    className="btn btn-sm btn-outline-success"
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 shrink-0"
                     onClick={loadData}
                   >
-                    <i className="bi bi-arrow-clockwise" />
-                  </button>
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
 
-              <div className="table-responsive">
-                <table className="table table-sm table-hover align-middle mb-0">
-                  <thead className="table-light">
-                    <tr>
-                      <th>Date</th>
-                      <th>Asset</th>
-                      <th>From</th>
-                      <th>To</th>
-                      <th>Reason</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-sm">Date</TableHead>
+                      <TableHead className="text-sm">Asset</TableHead>
+                      <TableHead className="text-sm">From</TableHead>
+                      <TableHead className="text-sm">To</TableHead>
+                      <TableHead className="text-sm">Reason</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {loading ? (
-                      <tr>
-                        <td colSpan="5" className="text-center py-3">
-                          Loading movements...
-                        </td>
-                      </tr>
+                      Array.from({ length: 4 }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-28" /></TableCell>
+                        </TableRow>
+                      ))
                     ) : filtered.length === 0 ? (
-                      <tr>
-                        <td colSpan="5" className="text-center py-3 text-muted">
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground text-sm">
                           No movement records found
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ) : (
                       filtered.map((movement) => (
-                        <tr key={movement.id}>
-                          <td>{movement.movement_date || "-"}</td>
-                          <td>
+                        <TableRow key={movement.id} className="text-sm">
+                          <TableCell>{movement.movement_date || "-"}</TableCell>
+                          <TableCell>
                             {assetMap[movement.asset_id] ||
                               movement.asset_id}
-                          </td>
-                          <td>
+                          </TableCell>
+                          <TableCell>
                             {locationMap[movement.from_location_id] || "-"}
-                          </td>
-                          <td>
+                          </TableCell>
+                          <TableCell>
                             {locationMap[movement.to_location_id] || "-"}
-                          </td>
-                          <td>
+                          </TableCell>
+                          <TableCell>
                             {movement.reason || movement.remarks || "-"}
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       ))
                     )}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

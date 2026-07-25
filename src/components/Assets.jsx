@@ -1,6 +1,28 @@
 import { useEffect, useMemo, useState } from "react";
 import { deleteAsset, getAssets, loadMasterData } from "../services/assetService";
-import { getStatusBadgeClass } from "../utils/statusBadge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Plus, Pencil, Trash2, RefreshCw, Package } from "lucide-react";
+
+function statusBadgeVariant(status) {
+  switch (status) {
+    case "Active":
+      return "default";
+    case "Spare":
+      return "secondary";
+    case "Under Repair":
+      return "outline";
+    case "Scrapped":
+      return "destructive";
+    default:
+      return "default";
+  }
+}
 
 function Assets({ setCurrentPage, onEditAsset }) {
   const [assets, setAssets] = useState([]);
@@ -80,135 +102,137 @@ function Assets({ setCurrentPage, onEditAsset }) {
   });
 
   return (
-    <div className="page-panel">
-      <div className="page-panel-header">
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="mb-0">IT Asset Register</h2>
-          <small className="text-muted">
-            Total Assets: <b>{filteredAssets.length}</b>
-          </small>
+          <h2 className="text-2xl font-bold tracking-tight">IT Asset Register</h2>
+          <p className="text-sm text-muted-foreground">
+            Total Assets: <span className="font-semibold">{filteredAssets.length}</span>
+          </p>
         </div>
 
-        <button
-          className="btn btn-sm btn-primary"
-          onClick={() => setCurrentPage("addAsset")}
-        >
-          <i className="bi bi-plus-lg me-1" />
+        <Button size="sm" onClick={() => setCurrentPage("addAsset")}>
+          <Plus className="mr-1 h-4 w-4" />
           Add Asset
-        </button>
+        </Button>
       </div>
 
-      <div className="card border-0 shadow-sm mb-3">
-        <div className="card-body py-2">
-          <div className="row g-2 align-items-center">
-            <div className="col-md-5">
-              <input
-                className="form-control form-control-sm"
+      <Card className="border-0 shadow-sm">
+        <CardContent className="py-3">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center">
+            <div className="flex-1">
+              <Input
                 placeholder="Search asset code, name, or brand"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
 
-            <div className="col-md-3">
-              <select
-                className="form-select form-select-sm"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="">All Statuses</option>
-                <option value="Active">Active</option>
-                <option value="Spare">Spare</option>
-                <option value="Under Repair">Under Repair</option>
-                <option value="Scrapped">Scrapped</option>
-              </select>
+            <div className="w-full md:w-48">
+              <Select value={statusFilter || "__all__"} onValueChange={(v) => setStatusFilter(v === "__all__" ? "" : v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">All Statuses</SelectItem>
+                  <SelectItem value="Active">Active</SelectItem>
+                  <SelectItem value="Spare">Spare</SelectItem>
+                  <SelectItem value="Under Repair">Under Repair</SelectItem>
+                  <SelectItem value="Scrapped">Scrapped</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <div className="col-md-2">
-              <button className="btn btn-sm btn-success w-100" onClick={loadAssets}>
-                <i className="bi bi-arrow-clockwise me-1" />
-                Refresh
-              </button>
-            </div>
+            <Button variant="outline" size="sm" onClick={loadAssets} className="md:w-auto w-full">
+              <RefreshCw className="mr-1 h-4 w-4" />
+              Refresh
+            </Button>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      <div className="card border-0 shadow-sm">
-        <div className="table-responsive">
-          <table className="table table-sm table-hover align-middle mb-0">
-            <thead className="table-light">
-              <tr>
-                <th>Asset Code</th>
-                <th>Asset Name</th>
-                <th>Category</th>
-                <th>Location</th>
-                <th>Department</th>
-                <th>Status</th>
-                <th className="text-end">Actions</th>
-              </tr>
-            </thead>
+      <Card className="border-0 shadow-sm">
+        <Table className="text-sm">
+          <TableHeader>
+            <TableRow>
+              <TableHead>Asset Code</TableHead>
+              <TableHead>Asset Name</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Location</TableHead>
+              <TableHead>Department</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
 
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan="7" className="text-center py-3">
-                    Loading assets...
-                  </td>
-                </tr>
-              ) : filteredAssets.length === 0 ? (
-                <tr>
-                  <td colSpan="7" className="text-center py-3">
-                    No assets found
-                  </td>
-                </tr>
-              ) : (
-                filteredAssets.map((asset) => (
-                  <tr key={asset.id}>
-                    <td className="fw-semibold">{asset.asset_code}</td>
-                    <td>{asset.asset_name}</td>
-                    <td>
-                      {lookupMaps.categories[asset.category_id] || "-"}
-                    </td>
-                    <td>
-                      {lookupMaps.locations[
-                        asset.current_location_id || asset.location_id
-                      ] || "-"}
-                    </td>
-                    <td>
-                      {lookupMaps.departments[asset.department_id] || "-"}
-                    </td>
-                    <td>
-                      <span
-                        className={`badge ${getStatusBadgeClass(asset.status)}`}
-                      >
-                        {asset.status}
-                      </span>
-                    </td>
-                    <td className="text-end">
-                      <button
-                        className="btn btn-sm btn-outline-warning me-1"
+          <TableBody>
+            {loading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  {Array.from({ length: 7 }).map((_, j) => (
+                    <TableCell key={j}>
+                      <Skeleton className="h-4 w-full" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : filteredAssets.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="py-12 text-center">
+                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                    <Package className="h-8 w-8" />
+                    <p>No assets found</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredAssets.map((asset) => (
+                <TableRow key={asset.id}>
+                  <TableCell className="font-semibold">{asset.asset_code}</TableCell>
+                  <TableCell>{asset.asset_name}</TableCell>
+                  <TableCell>
+                    {lookupMaps.categories[asset.category_id] || "-"}
+                  </TableCell>
+                  <TableCell>
+                    {lookupMaps.locations[
+                      asset.current_location_id || asset.location_id
+                    ] || "-"}
+                  </TableCell>
+                  <TableCell>
+                    {lookupMaps.departments[asset.department_id] || "-"}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={statusBadgeVariant(asset.status)}>
+                      {asset.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => onEditAsset(asset.id)}
                         title="Edit"
                       >
-                        <i className="bi bi-pencil-square" />
-                      </button>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
 
-                      <button
-                        className="btn btn-sm btn-outline-danger"
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => handleDelete(asset.id)}
                         title="Delete"
                       >
-                        <i className="bi bi-trash" />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </Card>
     </div>
   );
 }

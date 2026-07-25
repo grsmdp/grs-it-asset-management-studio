@@ -5,6 +5,13 @@ import {
   saveAsset,
   updateAsset,
 } from "../services/assetService";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Save, ArrowLeft } from "lucide-react";
 
 const emptyForm = {
   assetCode: "Auto Generate",
@@ -66,6 +73,25 @@ function AssetForm({
     }));
   }
 
+  async function handleSelectChange(name, value) {
+    if (name === "category" && !isEdit) {
+      const code = await generateAssetCode(value);
+
+      setFormData((prev) => ({
+        ...prev,
+        category: value,
+        assetCode: code,
+      }));
+
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }
+
   async function handleSave() {
     try {
       if (!formData.assetName || !formData.category || !formData.location) {
@@ -108,247 +134,257 @@ function AssetForm({
   }
 
   return (
-    <div className="page-panel">
-      <div className="page-panel-header">
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="mb-0">{isEdit ? "Edit Asset" : "Add New Asset"}</h2>
-          <small className="text-muted">
+          <h2 className="text-2xl font-bold tracking-tight">{isEdit ? "Edit Asset" : "Add New Asset"}</h2>
+          <p className="text-sm text-muted-foreground">
             {isEdit
               ? "Update asset details and assignment information"
               : "Register a new IT asset in the system"}
-          </small>
+          </p>
         </div>
       </div>
 
-      <div className="card border-0 shadow-sm">
-        <div className="card-body">
-          <h6 className="section-title mb-2">Asset Information</h6>
+      <Card className="border-0 shadow-sm">
+        <CardContent className="space-y-6 pt-6">
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Asset Information</h3>
 
-          <div className="row g-2">
-            <div className="col-md-6">
-              <label className="form-label">Asset Code</label>
-              <input
-                type="text"
-                className="form-control form-control-sm"
-                value={formData.assetCode}
-                readOnly
-              />
-            </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Asset Code</Label>
+                <Input
+                  type="text"
+                  value={formData.assetCode}
+                  readOnly
+                />
+              </div>
 
-            <div className="col-md-6">
-              <label className="form-label">
-                Asset Name <span className="text-danger">*</span>
-              </label>
-              <input
-                type="text"
-                name="assetName"
-                className="form-control form-control-sm"
-                value={formData.assetName}
-                onChange={handleChange}
-              />
-            </div>
+              <div className="space-y-2">
+                <Label>
+                  Asset Name <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  type="text"
+                  name="assetName"
+                  value={formData.assetName}
+                  onChange={handleChange}
+                />
+              </div>
 
-            <div className="col-md-6">
-              <label className="form-label">
-                Category <span className="text-danger">*</span>
-              </label>
-              <select
-                name="category"
-                className="form-select form-select-sm"
-                value={formData.category}
-                onChange={handleChange}
-                disabled={isEdit}
-              >
-                <option value="">Select Category</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.category_name}
-                  </option>
-                ))}
-              </select>
-            </div>
+              <div className="space-y-2">
+                <Label>
+                  Category <span className="text-destructive">*</span>
+                </Label>
+                  <Select
+                    value={formData.category ? String(formData.category) : ""}
+                    onValueChange={(v) => handleSelectChange("category", v)}
+                    disabled={isEdit}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((c) => (
+                        <SelectItem key={c.id} value={String(c.id)}>
+                          {c.category_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+              </div>
 
-            <div className="col-md-6">
-              <label className="form-label">Brand</label>
-              <input
-                type="text"
-                name="brand"
-                className="form-control form-control-sm"
-                value={formData.brand}
-                onChange={handleChange}
-              />
-            </div>
+              <div className="space-y-2">
+                <Label>Brand</Label>
+                <Input
+                  type="text"
+                  name="brand"
+                  value={formData.brand}
+                  onChange={handleChange}
+                />
+              </div>
 
-            <div className="col-md-6">
-              <label className="form-label">Model</label>
-              <input
-                type="text"
-                name="model"
-                className="form-control form-control-sm"
-                value={formData.model}
-                onChange={handleChange}
-              />
-            </div>
+              <div className="space-y-2">
+                <Label>Model</Label>
+                <Input
+                  type="text"
+                  name="model"
+                  value={formData.model}
+                  onChange={handleChange}
+                />
+              </div>
 
-            <div className="col-md-6">
-              <label className="form-label">Serial Number</label>
-              <input
-                type="text"
-                name="serialNumber"
-                className="form-control form-control-sm"
-                value={formData.serialNumber}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-
-          <hr className="my-3" />
-          <h6 className="section-title mb-2">Purchase Details</h6>
-
-          <div className="row g-2">
-            <div className="col-md-6">
-              <label className="form-label">Vendor</label>
-              <select
-                name="vendor"
-                className="form-select form-select-sm"
-                value={formData.vendor}
-                onChange={handleChange}
-              >
-                <option value="">Select Vendor</option>
-                {vendors.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.vendor_name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="col-md-6">
-              <label className="form-label">Purchase Date</label>
-              <input
-                type="date"
-                name="purchaseDate"
-                className="form-control form-control-sm"
-                value={formData.purchaseDate}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="col-md-6">
-              <label className="form-label">Purchase Cost</label>
-              <input
-                type="number"
-                name="purchaseCost"
-                className="form-control form-control-sm"
-                value={formData.purchaseCost}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="col-md-6">
-              <label className="form-label">Warranty Expiry</label>
-              <input
-                type="date"
-                name="warrantyExpiry"
-                className="form-control form-control-sm"
-                value={formData.warrantyExpiry}
-                onChange={handleChange}
-              />
+              <div className="space-y-2">
+                <Label>Serial Number</Label>
+                <Input
+                  type="text"
+                  name="serialNumber"
+                  value={formData.serialNumber}
+                  onChange={handleChange}
+                />
+              </div>
             </div>
           </div>
 
-          <hr className="my-3" />
-          <h6 className="section-title mb-2">Assignment</h6>
+          <hr className="border-border" />
 
-          <div className="row g-2">
-            <div className="col-md-6">
-              <label className="form-label">Department</label>
-              <select
-                name="department"
-                className="form-select form-select-sm"
-                value={formData.department}
-                onChange={handleChange}
-              >
-                <option value="">Select Department</option>
-                {departments.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.department_name}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Purchase Details</h3>
 
-            <div className="col-md-6">
-              <label className="form-label">
-                Location <span className="text-danger">*</span>
-              </label>
-              <select
-                name="location"
-                className="form-select form-select-sm"
-                value={formData.location}
-                onChange={handleChange}
-              >
-                <option value="">Select Location</option>
-                {locations.map((l) => (
-                  <option key={l.id} value={l.id}>
-                    {l.location_name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Vendor</Label>
+                <Select
+                  value={formData.vendor ? String(formData.vendor) : ""}
+                  onValueChange={(v) => handleSelectChange("vendor", v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Vendor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vendors.map((v) => (
+                      <SelectItem key={v.id} value={String(v.id)}>
+                        {v.vendor_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="col-md-6">
-              <label className="form-label">Status</label>
-              <select
-                name="status"
-                className="form-select form-select-sm"
-                value={formData.status}
-                onChange={handleChange}
-              >
-                <option value="Active">Active</option>
-                <option value="Spare">Spare</option>
-                <option value="Under Repair">Under Repair</option>
-                <option value="Scrapped">Scrapped</option>
-              </select>
+              <div className="space-y-2">
+                <Label>Purchase Date</Label>
+                <Input
+                  type="date"
+                  name="purchaseDate"
+                  value={formData.purchaseDate}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Purchase Cost</Label>
+                <Input
+                  type="number"
+                  name="purchaseCost"
+                  value={formData.purchaseCost}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Warranty Expiry</Label>
+                <Input
+                  type="date"
+                  name="warrantyExpiry"
+                  value={formData.warrantyExpiry}
+                  onChange={handleChange}
+                />
+              </div>
             </div>
           </div>
 
-          <hr className="my-3" />
+          <hr className="border-border" />
 
-          <label className="form-label">Remarks</label>
-          <textarea
-            rows="2"
-            name="remarks"
-            className="form-control form-control-sm"
-            value={formData.remarks}
-            onChange={handleChange}
-          />
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Assignment</h3>
 
-          <div className="d-flex flex-wrap gap-2 mt-3">
-            <button
-              className="btn btn-sm btn-primary"
-              onClick={handleSave}
-              disabled={saving}
-            >
-              <i className="bi bi-save me-1" />
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Department</Label>
+                <Select
+                  value={formData.department ? String(formData.department) : ""}
+                  onValueChange={(v) => handleSelectChange("department", v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departments.map((d) => (
+                      <SelectItem key={d.id} value={String(d.id)}>
+                        {d.department_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>
+                  Location <span className="text-destructive">*</span>
+                </Label>
+                <Select
+                  value={formData.location ? String(formData.location) : ""}
+                  onValueChange={(v) => handleSelectChange("location", v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locations.map((l) => (
+                      <SelectItem key={l.id} value={String(l.id)}>
+                        {l.location_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(v) => handleSelectChange("status", v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Spare">Spare</SelectItem>
+                    <SelectItem value="Under Repair">Under Repair</SelectItem>
+                    <SelectItem value="Scrapped">Scrapped</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          <hr className="border-border" />
+
+          <div className="space-y-2">
+            <Label>Remarks</Label>
+            <Textarea
+              rows={2}
+              name="remarks"
+              value={formData.remarks}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" onClick={handleSave} disabled={saving}>
+              <Save className="mr-1 h-4 w-4" />
               {saving ? "Saving..." : isEdit ? "Update Asset" : "Save Asset"}
-            </button>
+            </Button>
 
-            <button className="btn btn-sm btn-outline-secondary" onClick={handleClear}>
+            <Button variant="outline" size="sm" onClick={handleClear}>
               {isEdit ? "Reset Changes" : "Clear Form"}
-            </button>
+            </Button>
 
             {setCurrentPage && (
-              <button
-                className="btn btn-sm btn-light"
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setCurrentPage("assets")}
               >
+                <ArrowLeft className="mr-1 h-4 w-4" />
                 Cancel
-              </button>
+              </Button>
             )}
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

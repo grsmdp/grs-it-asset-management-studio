@@ -1,5 +1,6 @@
 ﻿import './App.css'
 import { useState, useEffect } from 'react'
+import { Bell, Search, Menu, ChevronRight, Download, X, Info } from 'lucide-react'
 import Sidebar from './components/Sidebar'
 import InstallPrompt from './components/InstallPrompt'
 import Dashboard from './components/Dashboard'
@@ -16,6 +17,26 @@ import AllTickets from './components/helpdesk/AllTickets'
 import MyTickets from './components/helpdesk/MyTickets'
 import TicketDetail from './components/helpdesk/TicketDetail'
 import HelpdeskReports from './components/helpdesk/HelpdeskReports'
+
+const breadcrumbMap = {
+  dashboard: ['Dashboard'],
+  assets: ['Assets'],
+  addAsset: ['Assets', 'Add Asset'],
+  editAsset: ['Assets', 'Edit Asset'],
+  movement: ['Asset Movement'],
+  maintenance: ['Maintenance'],
+  reports: ['Reports'],
+  categories: ['Settings', 'Categories'],
+  departments: ['Settings', 'Departments'],
+  vendors: ['Settings', 'Vendors'],
+  locations: ['Settings', 'Locations'],
+  helpdesk: ['Helpdesk', 'Dashboard'],
+  newTicket: ['Helpdesk', 'New Ticket'],
+  allTickets: ['Helpdesk', 'All Tickets'],
+  myTickets: ['Helpdesk', 'My Tickets'],
+  ticketDetail: ['Helpdesk', 'Ticket Detail'],
+  helpdeskReports: ['Helpdesk', 'Reports'],
+}
 
 function App() {
   const [currentPage, setCurrentPage] = useState('dashboard')
@@ -36,14 +57,16 @@ function App() {
     window.location.reload();
   }
 
+  const crumbs = breadcrumbMap[currentPage] || ['Dashboard']
+
   return (
-    <div className="app">
+    <div className="flex min-h-screen bg-[#f4f7fb]">
       {showUpdateBanner && (
-        <div className="pwa-update-banner">
-          <div className="d-flex align-items-center gap-2">
-            <i className="bi bi-info-circle text-primary" />
-            <span style={{ fontSize: "0.85rem" }}>A new version is available.</span>
-            <button className="btn btn-sm btn-primary" onClick={handleUpdate}>
+        <div className="fixed top-0 left-0 right-0 z-[9997] border-b border-blue-200 bg-blue-50 py-2 text-center lg:left-[260px]">
+          <div className="flex items-center justify-center gap-2">
+            <Info className="h-4 w-4 text-blue-600" />
+            <span className="text-sm">A new version is available.</span>
+            <button className="rounded-md bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700" onClick={handleUpdate}>
               Update
             </button>
           </div>
@@ -57,101 +80,149 @@ function App() {
         onCloseMobile={() => setMobileOpen(false)}
       />
 
-      <main className="main-content">
-        <button
-          className="btn btn-sm btn-outline-secondary d-md-none mb-2"
-          onClick={() => setMobileOpen(true)}
-        >
-          <i className="bi bi-list me-1" />
-          Menu
-        </button>
+      <div className="flex flex-1 flex-col lg:ml-[260px]">
+        <header className="flex h-14 shrink-0 items-center gap-4 border-b border-slate-200 bg-white px-4 lg:px-6">
+          <button
+            className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 lg:hidden"
+            onClick={() => setMobileOpen(true)}
+          >
+            <Menu className="h-5 w-5" />
+          </button>
 
-        {currentPage === 'dashboard' && (
-          <Dashboard setCurrentPage={setCurrentPage} />
-        )}
+          <nav className="hidden items-center gap-1 text-sm text-slate-500 md:flex">
+            <button onClick={() => setCurrentPage('dashboard')} className="hover:text-slate-900">
+              Home
+            </button>
+            {crumbs.map((crumb, i) => (
+              <span key={i} className="flex items-center gap-1">
+                <ChevronRight className="h-3.5 w-3.5" />
+                {i < crumbs.length - 1 ? (
+                  <button onClick={() => setCurrentPage('dashboard')} className="hover:text-slate-900">
+                    {crumb}
+                  </button>
+                ) : (
+                  <span className="font-medium text-slate-900">{crumb}</span>
+                )}
+              </span>
+            ))}
+          </nav>
 
-        {currentPage === 'assets' && (
-          <Assets
-            setCurrentPage={setCurrentPage}
-            onEditAsset={(id) => {
-              setEditingAssetId(id)
-              setCurrentPage('editAsset')
-            }}
-          />
-        )}
+          <div className="flex-1" />
 
-        {currentPage === 'addAsset' && (
-          <AddAsset setCurrentPage={setCurrentPage} />
-        )}
+          <div className="relative hidden sm:block">
+            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search..."
+              className="h-9 w-56 rounded-lg border border-slate-200 bg-slate-50 pl-8 pr-3 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
 
-        {currentPage === 'editAsset' && (
-          <EditAsset assetId={editingAssetId} setCurrentPage={setCurrentPage} />
-        )}
+          <button className="relative rounded-lg p-2 text-slate-500 hover:bg-slate-100">
+            <Bell className="h-4 w-4" />
+            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+              0
+            </span>
+          </button>
 
-        {currentPage === 'movement' && (
-          <AssetMovement setCurrentPage={setCurrentPage} />
-        )}
+          <div className="hidden h-6 w-px bg-slate-200 sm:block" />
 
-        {currentPage === 'maintenance' && (
-          <Maintenance />
-        )}
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white">
+              MD
+            </div>
+            <span className="hidden text-sm font-medium lg:inline">IT Admin</span>
+          </div>
+        </header>
 
-        {currentPage === 'reports' && (
-          <Reports />
-        )}
+        <main className="flex-1 overflow-auto p-4 lg:p-6">
+          {currentPage === 'dashboard' && (
+            <Dashboard setCurrentPage={setCurrentPage} />
+          )}
 
-        {currentPage === 'categories' && (
-          <Masters masterType="categories" />
-        )}
+          {currentPage === 'assets' && (
+            <Assets
+              setCurrentPage={setCurrentPage}
+              onEditAsset={(id) => {
+                setEditingAssetId(id)
+                setCurrentPage('editAsset')
+              }}
+            />
+          )}
 
-        {currentPage === 'departments' && (
-          <Masters masterType="departments" />
-        )}
+          {currentPage === 'addAsset' && (
+            <AddAsset setCurrentPage={setCurrentPage} />
+          )}
 
-        {currentPage === 'vendors' && (
-          <Masters masterType="vendors" />
-        )}
+          {currentPage === 'editAsset' && (
+            <EditAsset assetId={editingAssetId} setCurrentPage={setCurrentPage} />
+          )}
 
-        {currentPage === 'locations' && (
-          <Masters masterType="locations" />
-        )}
+          {currentPage === 'movement' && (
+            <AssetMovement setCurrentPage={setCurrentPage} />
+          )}
 
-        {currentPage === 'helpdesk' && (
-          <HelpdeskDashboard setCurrentPage={setCurrentPage} />
-        )}
+          {currentPage === 'maintenance' && (
+            <Maintenance />
+          )}
 
-        {currentPage === 'newTicket' && (
-          <NewTicket
-            setCurrentPage={setCurrentPage}
-            setViewingTicketId={setViewingTicketId}
-          />
-        )}
+          {currentPage === 'reports' && (
+            <Reports />
+          )}
 
-        {currentPage === 'allTickets' && (
-          <AllTickets
-            setCurrentPage={setCurrentPage}
-            setViewingTicketId={setViewingTicketId}
-          />
-        )}
+          {currentPage === 'categories' && (
+            <Masters masterType="categories" />
+          )}
 
-        {currentPage === 'myTickets' && (
-          <MyTickets
-            setCurrentPage={setCurrentPage}
-            setViewingTicketId={setViewingTicketId}
-          />
-        )}
+          {currentPage === 'departments' && (
+            <Masters masterType="departments" />
+          )}
 
-        {currentPage === 'ticketDetail' && viewingTicketId && (
-          <TicketDetail
-            ticketId={viewingTicketId}
-            setCurrentPage={setCurrentPage}
-          />
-        )}
+          {currentPage === 'vendors' && (
+            <Masters masterType="vendors" />
+          )}
 
-        {currentPage === 'helpdeskReports' && (
-          <HelpdeskReports setCurrentPage={setCurrentPage} />
-        )}
-      </main>
+          {currentPage === 'locations' && (
+            <Masters masterType="locations" />
+          )}
+
+          {currentPage === 'helpdesk' && (
+            <HelpdeskDashboard setCurrentPage={setCurrentPage} />
+          )}
+
+          {currentPage === 'newTicket' && (
+            <NewTicket
+              setCurrentPage={setCurrentPage}
+              setViewingTicketId={setViewingTicketId}
+            />
+          )}
+
+          {currentPage === 'allTickets' && (
+            <AllTickets
+              setCurrentPage={setCurrentPage}
+              setViewingTicketId={setViewingTicketId}
+            />
+          )}
+
+          {currentPage === 'myTickets' && (
+            <MyTickets
+              setCurrentPage={setCurrentPage}
+              setViewingTicketId={setViewingTicketId}
+            />
+          )}
+
+          {currentPage === 'ticketDetail' && viewingTicketId && (
+            <TicketDetail
+              ticketId={viewingTicketId}
+              setCurrentPage={setCurrentPage}
+            />
+          )}
+
+          {currentPage === 'helpdeskReports' && (
+            <HelpdeskReports setCurrentPage={setCurrentPage} />
+          )}
+        </main>
+      </div>
     </div>
   )
 }

@@ -5,6 +5,8 @@ import {
   mapAssetToForm,
 } from "../services/assetService";
 import AssetForm from "./AssetForm";
+import { Button } from "@/components/ui/button";
+import { AlertCircle, Loader2, ArrowLeft } from "lucide-react";
 
 function EditAsset({ assetId, setCurrentPage }) {
   const [categories, setCategories] = useState([]);
@@ -44,10 +46,10 @@ function EditAsset({ assetId, setCurrentPage }) {
 
   if (loading) {
     return (
-      <div className="page-panel">
-        <div className="text-center py-5">
-          <div className="spinner-border text-primary" role="status" />
-          <p className="mt-3 text-muted">Loading asset details...</p>
+      <div className="space-y-6">
+        <div className="flex flex-col items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="mt-3 text-sm text-muted-foreground">Loading asset details...</p>
         </div>
       </div>
     );
@@ -55,14 +57,19 @@ function EditAsset({ assetId, setCurrentPage }) {
 
   if (error) {
     return (
-      <div className="page-panel">
-        <div className="alert alert-danger">{error}</div>
-        <button
-          className="btn btn-outline-primary"
+      <div className="space-y-4">
+        <div className="flex items-start gap-3 rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>{error}</span>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => setCurrentPage("assets")}
         >
+          <ArrowLeft className="mr-1 h-4 w-4" />
           Back to Assets
-        </button>
+        </Button>
       </div>
     );
   }

@@ -6,7 +6,29 @@ import {
   updateAsset,
   updateMaintenance,
 } from "../services/assetService";
-import { getStatusBadgeClass } from "../utils/statusBadge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
+import { RefreshCw, Pencil } from "lucide-react";
+
+const statusVariantMap = {
+  Scheduled: { variant: "default", className: "" },
+  "In Progress": { variant: "outline", className: "border-amber-500 text-amber-700 bg-amber-50" },
+  Completed: { variant: "default", className: "bg-emerald-600 text-white hover:bg-emerald-600/80" },
+  Cancelled: { variant: "secondary", className: "" },
+};
 
 function Maintenance() {
   const [records, setRecords] = useState([]);
@@ -155,29 +177,27 @@ function Maintenance() {
   });
 
   return (
-    <div className="page-panel">
-      <div className="page-panel-header">
-        <div>
-          <h2 className="mb-0">Maintenance</h2>
-          <small className="text-muted">
-            Track repairs, service requests, and maintenance status
-          </small>
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight">Maintenance</h2>
+        <p className="text-sm text-muted-foreground">
+          Track repairs, service requests, and maintenance status
+        </p>
       </div>
 
-      <div className="row g-3">
-        <div className="col-lg-4">
-          <div className="card border-0 shadow-sm">
-            <div className="card-body">
-              <h6 className="section-title">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1">
+          <Card className="border-0 shadow-sm">
+            <CardContent className="pt-6">
+              <h6 className="text-sm font-semibold mb-4">
                 {editingId ? "Edit Maintenance Record" : "New Maintenance Record"}
               </h6>
 
-              <form onSubmit={handleSubmit} className="row g-2">
-                <div className="col-12">
-                  <label className="form-label">Asset *</label>
+              <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-3">
+                <div className="space-y-2">
+                  <Label className="text-sm">Asset *</Label>
                   <select
-                    className="form-select form-select-sm"
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring"
                     value={form.asset_id}
                     onChange={(e) =>
                       setForm((prev) => ({ ...prev, asset_id: e.target.value }))
@@ -192,10 +212,10 @@ function Maintenance() {
                   </select>
                 </div>
 
-                <div className="col-12">
-                  <label className="form-label">Maintenance Type</label>
+                <div className="space-y-2">
+                  <Label className="text-sm">Maintenance Type</Label>
                   <select
-                    className="form-select form-select-sm"
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring"
                     value={form.maintenance_type}
                     onChange={(e) =>
                       setForm((prev) => ({
@@ -211,10 +231,10 @@ function Maintenance() {
                   </select>
                 </div>
 
-                <div className="col-12">
-                  <label className="form-label">Status</label>
+                <div className="space-y-2">
+                  <Label className="text-sm">Status</Label>
                   <select
-                    className="form-select form-select-sm"
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring"
                     value={form.status}
                     onChange={(e) =>
                       setForm((prev) => ({ ...prev, status: e.target.value }))
@@ -227,11 +247,10 @@ function Maintenance() {
                   </select>
                 </div>
 
-                <div className="col-12">
-                  <label className="form-label">Cost</label>
-                  <input
+                <div className="space-y-2">
+                  <Label className="text-sm">Cost</Label>
+                  <Input
                     type="number"
-                    className="form-control form-control-sm"
                     value={form.cost}
                     onChange={(e) =>
                       setForm((prev) => ({ ...prev, cost: e.target.value }))
@@ -239,11 +258,10 @@ function Maintenance() {
                   />
                 </div>
 
-                <div className="col-12">
-                  <label className="form-label">Remarks</label>
-                  <textarea
-                    className="form-control form-control-sm"
-                    rows="2"
+                <div className="space-y-2">
+                  <Label className="text-sm">Remarks</Label>
+                  <Textarea
+                    rows={2}
                     value={form.remarks}
                     onChange={(e) =>
                       setForm((prev) => ({ ...prev, remarks: e.target.value }))
@@ -251,42 +269,43 @@ function Maintenance() {
                   />
                 </div>
 
-                <div className="col-12 d-flex gap-2">
-                  <button
+                <div className="flex gap-2">
+                  <Button
                     type="submit"
-                    className="btn btn-sm btn-primary flex-fill"
+                    size="sm"
+                    className="flex-1"
                     disabled={saving}
                   >
                     {saving ? "Saving..." : editingId ? "Update" : "Create Record"}
-                  </button>
+                  </Button>
                   {editingId && (
-                    <button
+                    <Button
                       type="button"
-                      className="btn btn-sm btn-outline-secondary"
+                      variant="outline"
+                      size="sm"
                       onClick={resetForm}
                     >
                       Cancel
-                    </button>
+                    </Button>
                   )}
                 </div>
               </form>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="col-lg-8">
-          <div className="card border-0 shadow-sm">
-            <div className="card-body">
-              <div className="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-                <h6 className="section-title mb-0">
+        <div className="lg:col-span-2">
+          <Card className="border-0 shadow-sm">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                <h6 className="text-sm font-semibold">
                   Maintenance History ({filtered.length})
                 </h6>
-                <div className="d-flex gap-2">
+                <div className="flex items-center gap-2">
                   <select
-                    className="form-select form-select-sm"
+                    className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring"
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    style={{ width: 130 }}
                   >
                     <option value="">All Status</option>
                     <option value="Scheduled">Scheduled</option>
@@ -294,113 +313,120 @@ function Maintenance() {
                     <option value="Completed">Completed</option>
                     <option value="Cancelled">Cancelled</option>
                   </select>
-                  <input
-                    className="form-control form-control-sm"
+                  <Input
                     placeholder="Search..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    style={{ width: 140 }}
+                    className="h-9 w-36"
                   />
-                  <button
-                    className="btn btn-sm btn-outline-success"
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 shrink-0"
                     onClick={loadData}
                   >
-                    <i className="bi bi-arrow-clockwise" />
-                  </button>
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
 
-              <div className="table-responsive">
-                <table className="table table-sm table-hover align-middle mb-0">
-                  <thead className="table-light">
-                    <tr>
-                      <th>Asset</th>
-                      <th>Type</th>
-                      <th>Status</th>
-                      <th>Cost</th>
-                      <th>Remarks</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-sm">Asset</TableHead>
+                      <TableHead className="text-sm">Type</TableHead>
+                      <TableHead className="text-sm">Status</TableHead>
+                      <TableHead className="text-sm">Cost</TableHead>
+                      <TableHead className="text-sm">Remarks</TableHead>
+                      <TableHead className="text-sm">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {loading ? (
-                      <tr>
-                        <td colSpan="6" className="text-center py-3">
-                          Loading maintenance records...
-                        </td>
-                      </tr>
-                    ) : filtered.length === 0 ? (
-                      <tr>
-                        <td colSpan="6" className="text-center py-3 text-muted">
-                          No maintenance records found
-                        </td>
-                      </tr>
-                    ) : (
-                      filtered.map((record) => (
-                        <tr key={record.id}>
-                          <td>
-                            {assetMap[record.asset_id] || record.asset_id}
-                          </td>
-                          <td>{record.maintenance_type}</td>
-                          <td>
-                            <span
-                              className={`badge ${getStatusBadgeClass(record.status)}`}
-                            >
-                              {record.status}
-                            </span>
-                          </td>
-                          <td>
-                            {record.cost != null
-                              ? `₹${Number(record.cost).toLocaleString()}`
-                              : "-"}
-                          </td>
-                          <td>{record.remarks || "-"}</td>
-                          <td>
-                            <div className="d-flex gap-1 flex-wrap">
-                              {record.status !== "Completed" &&
-                                record.status !== "Cancelled" && (
-                                  <select
-                                    className="form-select form-select-sm"
-                                    value={record.status}
-                                    onChange={(e) =>
-                                      handleStatusChange(
-                                        record,
-                                        e.target.value
-                                      )
-                                    }
-                                    style={{ width: 110 }}
-                                  >
-                                    <option value="Scheduled">
-                                      Scheduled
-                                    </option>
-                                    <option value="In Progress">
-                                      In Progress
-                                    </option>
-                                    <option value="Completed">
-                                      Completed
-                                    </option>
-                                    <option value="Cancelled">
-                                      Cancelled
-                                    </option>
-                                  </select>
-                                )}
-                              <button
-                                className="btn btn-sm btn-outline-warning"
-                                onClick={() => handleEdit(record)}
-                                title="Edit"
-                              >
-                                <i className="bi bi-pencil-square" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
+                      Array.from({ length: 4 }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                          <TableCell><Skeleton className="h-5 w-20 rounded-full" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-28" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                        </TableRow>
                       ))
+                    ) : filtered.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground text-sm">
+                          No maintenance records found
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filtered.map((record) => {
+                        const badgeInfo = statusVariantMap[record.status] || statusVariantMap.Scheduled;
+                        return (
+                          <TableRow key={record.id} className="text-sm">
+                            <TableCell>
+                              {assetMap[record.asset_id] || record.asset_id}
+                            </TableCell>
+                            <TableCell>{record.maintenance_type}</TableCell>
+                            <TableCell>
+                              <Badge variant={badgeInfo.variant} className={badgeInfo.className}>
+                                {record.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {record.cost != null
+                                ? `₹${Number(record.cost).toLocaleString()}`
+                                : "-"}
+                            </TableCell>
+                            <TableCell>{record.remarks || "-"}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                {record.status !== "Completed" &&
+                                  record.status !== "Cancelled" && (
+                                    <select
+                                      className="flex h-8 rounded-md border border-input bg-transparent px-2 py-1 text-xs shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring"
+                                      value={record.status}
+                                      onChange={(e) =>
+                                        handleStatusChange(
+                                          record,
+                                          e.target.value
+                                        )
+                                      }
+                                    >
+                                      <option value="Scheduled">
+                                        Scheduled
+                                      </option>
+                                      <option value="In Progress">
+                                        In Progress
+                                      </option>
+                                      <option value="Completed">
+                                        Completed
+                                      </option>
+                                      <option value="Cancelled">
+                                        Cancelled
+                                      </option>
+                                    </select>
+                                  )}
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => handleEdit(record)}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
                     )}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
