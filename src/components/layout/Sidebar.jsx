@@ -143,13 +143,15 @@ function Sidebar({
   return (
     <>
       {/* Mobile overlay */}
-      <div
-        className={cn(
-          "fixed inset-0 z-40 bg-black/30 backdrop-blur-sm transition-opacity duration-300 lg:hidden",
-          mobileOpen ? "opacity-100" : "pointer-events-none opacity-0"
-        )}
-        onClick={onCloseMobile}
-      />
+      {onCloseMobile && (
+        <div
+          className={cn(
+            "fixed inset-0 z-40 bg-black/30 backdrop-blur-sm transition-opacity duration-300 lg:hidden",
+            mobileOpen ? "opacity-100" : "pointer-events-none opacity-0"
+          )}
+          onClick={onCloseMobile}
+        />
+      )}
 
       {/* Sidebar */}
       <aside

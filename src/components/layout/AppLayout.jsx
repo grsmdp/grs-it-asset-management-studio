@@ -18,15 +18,6 @@ function AppLayout({ currentPage, setCurrentPage, children }) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  useEffect(() => {
-    if (mobileOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => { document.body.style.overflow = ""; };
-  }, [mobileOpen]);
-
   return (
     <TooltipProvider delayDuration={300}>
       <Sidebar
@@ -34,21 +25,19 @@ function AppLayout({ currentPage, setCurrentPage, children }) {
         setCurrentPage={setCurrentPage}
         collapsed={isDesktop ? collapsed : true}
         onToggleCollapse={isDesktop ? () => setCollapsed((v) => !v) : undefined}
-        mobileOpen={mobileOpen}
-        onCloseMobile={() => setMobileOpen(false)}
+        mobileOpen={isDesktop ? mobileOpen : true}
+        onCloseMobile={isDesktop ? () => setMobileOpen(false) : undefined}
       />
 
       <div
         className="flex flex-col h-screen bg-slate-50 overflow-hidden transition-all duration-300 ease-in-out"
-        style={
-          isDesktop
-            ? { marginLeft: collapsed ? 72 : 260 }
-            : { marginLeft: 0 }
-        }
+        style={{
+          marginLeft: isDesktop ? (collapsed ? 72 : 260) : 72,
+        }}
       >
         <TopHeader
           currentPage={currentPage}
-          onMenuClick={() => setMobileOpen(true)}
+          onMenuClick={isDesktop ? () => setMobileOpen(true) : undefined}
         />
 
         <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 lg:p-6">
