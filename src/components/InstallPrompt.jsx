@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Download, X } from "lucide-react";
 
 function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -23,7 +24,10 @@ function InstallPrompt() {
       setDeferredPrompt(null);
     }
 
-    if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone) {
+    if (
+      window.matchMedia("(display-mode: standalone)").matches ||
+      window.navigator.standalone
+    ) {
       setIsInstalled(true);
       return;
     }
@@ -56,24 +60,27 @@ function InstallPrompt() {
   if (isInstalled || !showBanner) return null;
 
   return (
-    <div className="pwa-install-banner">
-      <div className="d-flex align-items-center gap-2">
-        <i className="bi bi-download text-primary" style={{ fontSize: 18 }} />
-        <div className="flex-grow-1">
-          <strong style={{ fontSize: "0.85rem" }}>Install GRS Assets</strong>
-          <div style={{ fontSize: "0.75rem" }} className="text-muted">
-            Add to home screen for quick access
-          </div>
+    <div className="fixed bottom-0 left-0 right-0 z-[9999] border-t border-slate-200 bg-white shadow-lg">
+      <div className="flex items-center gap-3 px-4 py-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+          <Download className="h-4 w-4" />
         </div>
-        <button className="btn btn-sm btn-primary" onClick={handleInstall}>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-slate-800">Install GRS Assets</p>
+          <p className="text-xs text-slate-500">Add to home screen for quick access</p>
+        </div>
+        <button
+          onClick={handleInstall}
+          className="shrink-0 rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-medium text-white hover:bg-blue-700 transition-colors"
+        >
           Install
         </button>
         <button
-          className="btn btn-sm btn-outline-secondary"
           onClick={handleDismiss}
+          className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
           title="Dismiss"
         >
-          <i className="bi bi-x" />
+          <X className="h-4 w-4" />
         </button>
       </div>
     </div>

@@ -6,21 +6,12 @@ import {
   loadMasterData,
   updateAsset,
 } from "../services/assetService";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, ArrowRightLeft, CalendarDays, TrendingUp, ArrowLeftRight } from "lucide-react";
+import PageHeader from "@/components/layout/PageHeader";
+import FilterCard from "@/components/layout/FilterCard";
+import FormCard from "@/components/layout/FormCard";
+import TableCard from "@/components/layout/TableCard";
+import StatCard from "@/components/layout/StatCard";
 
 function AssetMovement({ setCurrentPage }) {
   const [movements, setMovements] = useState([]);
@@ -29,6 +20,7 @@ function AssetMovement({ setCurrentPage }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
+  const [formOpen, setFormOpen] = useState(true);
   const [form, setForm] = useState({
     asset_id: "",
     from_location_id: "",
@@ -155,216 +147,223 @@ function AssetMovement({ setCurrentPage }) {
     return true;
   });
 
+  const thisMonth = useMemo(() => {
+    const now = new Date();
+    const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    return movements.filter((m) => m.movement_date && m.movement_date.startsWith(ym)).length;
+  }, [movements]);
+
+  const uniqueAssets = useMemo(
+    () => new Set(movements.map((m) => m.asset_id)).size,
+    [movements]
+  );
+
+  const columns = [
+    { label: "Date" },
+    { label: "Asset" },
+    { label: "From" },
+    { label: "To" },
+    { label: "Reason" },
+  ];
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Asset Movement</h2>
-          <p className="text-sm text-muted-foreground">
-            Transfer assets between locations and track movement history
-          </p>
-        </div>
-        <Button variant="outline" size="sm" onClick={() => setCurrentPage("assets")}>
+      <PageHeader
+        pretitle="OPERATIONS"
+        title="Asset Movement"
+        subtitle="Transfer assets between locations"
+        accent="#f76707"
+      >
+        <button
+          onClick={() => setCurrentPage("assets")}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+        >
+          <ArrowLeftRight className="h-3.5 w-3.5" />
           View Assets
-        </Button>
-      </div>
+        </button>
+      </PageHeader>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1">
-          <Card className="border-0 shadow-sm">
-            <CardContent className="pt-6">
-              <h6 className="text-sm font-semibold mb-4">Record Movement</h6>
+      <FilterCard>
+        <input
+          type="text"
+          placeholder="Search movements..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="h-9 w-64 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 transition-colors"
+        />
+        <button
+          onClick={loadData}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+          Refresh
+        </button>
+      </FilterCard>
 
-              <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-3">
-                <div className="space-y-2">
-                  <Label className="text-sm">Asset</Label>
-                  <select
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring"
-                    value={form.asset_id}
-                    onChange={(e) => handleAssetChange(e.target.value)}
-                  >
-                    <option value="">Select Asset</option>
-                    {assets.map((asset) => (
-                      <option key={asset.id} value={asset.id}>
-                        {asset.asset_code} - {asset.asset_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+      <FormCard
+        title="Record Movement"
+        subtitle="Log a new asset transfer"
+        open={formOpen}
+        onToggle={() => setFormOpen(!formOpen)}
+      >
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-slate-600">Asset *</label>
+            <select
+              className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 transition-colors"
+              value={form.asset_id}
+              onChange={(e) => handleAssetChange(e.target.value)}
+            >
+              <option value="">Select Asset</option>
+              {assets.map((asset) => (
+                <option key={asset.id} value={asset.id}>
+                  {asset.asset_code} - {asset.asset_name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-                <div className="space-y-2">
-                  <Label className="text-sm">From Location</Label>
-                  <select
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring"
-                    value={form.from_location_id}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        from_location_id: e.target.value,
-                      }))
-                    }
-                  >
-                    <option value="">Current / Unknown</option>
-                    {locations.map((l) => (
-                      <option key={l.id} value={l.id}>
-                        {l.location_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-slate-600">From Location</label>
+            <select
+              className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 transition-colors"
+              value={form.from_location_id}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  from_location_id: e.target.value,
+                }))
+              }
+            >
+              <option value="">Current / Unknown</option>
+              {locations.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.location_name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-                <div className="space-y-2">
-                  <Label className="text-sm">To Location</Label>
-                  <select
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring"
-                    value={form.to_location_id}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        to_location_id: e.target.value,
-                      }))
-                    }
-                  >
-                    <option value="">Select Destination</option>
-                    {locations.map((l) => (
-                      <option key={l.id} value={l.id}>
-                        {l.location_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-slate-600">To Location *</label>
+            <select
+              className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 transition-colors"
+              value={form.to_location_id}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  to_location_id: e.target.value,
+                }))
+              }
+            >
+              <option value="">Select Destination</option>
+              {locations.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.location_name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-                <div className="space-y-2">
-                  <Label className="text-sm">Movement Date</Label>
-                  <Input
-                    type="date"
-                    value={form.movement_date}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        movement_date: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-slate-600">Movement Date *</label>
+            <input
+              type="date"
+              value={form.movement_date}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  movement_date: e.target.value,
+                }))
+              }
+              className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 transition-colors"
+            />
+          </div>
 
-                <div className="space-y-2">
-                  <Label className="text-sm">Reason</Label>
-                  <Input
-                    type="text"
-                    value={form.reason}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, reason: e.target.value }))
-                    }
-                    placeholder="Transfer reason"
-                  />
-                </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-slate-600">Reason</label>
+            <input
+              type="text"
+              value={form.reason}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, reason: e.target.value }))
+              }
+              placeholder="Transfer reason"
+              className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 transition-colors"
+            />
+          </div>
 
-                <div className="space-y-2">
-                  <Label className="text-sm">Remarks</Label>
-                  <Textarea
-                    rows={2}
-                    value={form.remarks}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, remarks: e.target.value }))
-                    }
-                  />
-                </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-slate-600">Remarks</label>
+            <textarea
+              rows={2}
+              value={form.remarks}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, remarks: e.target.value }))
+              }
+              placeholder="Additional notes"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 transition-colors resize-none"
+            />
+          </div>
 
-                <div>
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    size="sm"
-                    disabled={saving}
-                  >
-                    {saving ? "Saving..." : "Record Movement"}
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
+          <div className="md:col-span-2 lg:col-span-3 flex justify-end pt-1">
+            <button
+              type="submit"
+              disabled={saving}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-orange-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-orange-700 disabled:opacity-50 transition-colors"
+            >
+              {saving ? "Saving..." : "Record Movement"}
+            </button>
+          </div>
+        </form>
+      </FormCard>
 
-        <div className="lg:col-span-2">
-          <Card className="border-0 shadow-sm">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-                <h6 className="text-sm font-semibold">
-                  Movement History ({filtered.length})
-                </h6>
-                <div className="flex items-center gap-2">
-                  <Input
-                    placeholder="Search..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="h-9 w-40"
-                  />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9 shrink-0"
-                    onClick={loadData}
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+      <TableCard
+        title="Movement History"
+        count={filtered.length}
+        columns={columns}
+        data={filtered}
+        loading={loading}
+        emptyMessage="No movement records found"
+        emptyIcon={ArrowRightLeft}
+        renderRow={(movement) => (
+          <tr key={movement.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors text-sm">
+            <td className="px-5 py-3 text-slate-600">{movement.movement_date || "-"}</td>
+            <td className="px-5 py-3 text-slate-700 font-medium">
+              {assetMap[movement.asset_id] || movement.asset_id}
+            </td>
+            <td className="px-5 py-3 text-slate-600">
+              {locationMap[movement.from_location_id] || "-"}
+            </td>
+            <td className="px-5 py-3 text-slate-600">
+              {locationMap[movement.to_location_id] || "-"}
+            </td>
+            <td className="px-5 py-3 text-slate-500">
+              {movement.reason || movement.remarks || "-"}
+            </td>
+          </tr>
+        )}
+      />
 
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-sm">Date</TableHead>
-                      <TableHead className="text-sm">Asset</TableHead>
-                      <TableHead className="text-sm">From</TableHead>
-                      <TableHead className="text-sm">To</TableHead>
-                      <TableHead className="text-sm">Reason</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {loading ? (
-                      Array.from({ length: 4 }).map((_, i) => (
-                        <TableRow key={i}>
-                          <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-28" /></TableCell>
-                        </TableRow>
-                      ))
-                    ) : filtered.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground text-sm">
-                          No movement records found
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filtered.map((movement) => (
-                        <TableRow key={movement.id} className="text-sm">
-                          <TableCell>{movement.movement_date || "-"}</TableCell>
-                          <TableCell>
-                            {assetMap[movement.asset_id] ||
-                              movement.asset_id}
-                          </TableCell>
-                          <TableCell>
-                            {locationMap[movement.from_location_id] || "-"}
-                          </TableCell>
-                          <TableCell>
-                            {locationMap[movement.to_location_id] || "-"}
-                          </TableCell>
-                          <TableCell>
-                            {movement.reason || movement.remarks || "-"}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <StatCard
+          icon={ArrowRightLeft}
+          label="Total Movements"
+          value={movements.length}
+          color="#3b82f6"
+        />
+        <StatCard
+          icon={CalendarDays}
+          label="This Month"
+          value={thisMonth}
+          color="#8b5cf6"
+        />
+        <StatCard
+          icon={TrendingUp}
+          label="Unique Assets Moved"
+          value={uniqueAssets}
+          color="#10b981"
+        />
       </div>
     </div>
   );

@@ -1,53 +1,55 @@
-import { useState } from "react"
-import { Menu } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet"
-import { TooltipProvider } from "@/components/ui/tooltip"
-import { Sidebar } from "./Sidebar"
-import { Header } from "./Header"
-import { PageContainer } from "./PageContainer"
+import { useState, useEffect } from "react";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import Sidebar from "./Sidebar";
+import TopHeader from "./TopHeader";
+import InstallPrompt from "@/components/InstallPrompt";
 
-function AppLayout({ currentPage, onNavigate, children }) {
-  const [mobileOpen, setMobileOpen] = useState(false)
+function AppLayout({ currentPage, setCurrentPage, children }) {
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  function handleNavigate(page) {
-    onNavigate(page)
-    setMobileOpen(false)
-  }
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [mobileOpen]);
+
+  const sidebarWidth = collapsed ? 72 : 260;
 
   return (
-    <TooltipProvider>
-      <div className="flex h-screen overflow-hidden bg-background">
-        <aside className="hidden lg:flex lg:w-60 lg:flex-col lg:border-r">
-          <Sidebar currentPage={currentPage} onNavigate={handleNavigate} />
-        </aside>
+    <TooltipProvider delayDuration={300}>
+      <div className="flex h-screen overflow-hidden bg-slate-50">
+        <Sidebar
+          currentPage={currentPage}
+          setCurrentPage={setCurrentPage}
+          collapsed={collapsed}
+          onToggleCollapse={() => setCollapsed((v) => !v)}
+          mobileOpen={mobileOpen}
+          onCloseMobile={() => setMobileOpen(false)}
+        />
 
-        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="fixed top-3 left-3 z-40 lg:hidden h-9 w-9"
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-60 p-0">
-            <Sidebar currentPage={currentPage} onNavigate={handleNavigate} />
-          </SheetContent>
-        </Sheet>
+        <div
+          className="flex flex-1 flex-col overflow-hidden transition-[margin] duration-300 ease-in-out"
+          style={{ marginLeft: sidebarWidth }}
+        >
+          <TopHeader
+            currentPage={currentPage}
+            onMenuClick={() => setMobileOpen(true)}
+            sidebarWidth={sidebarWidth}
+          />
 
-        <div className="flex flex-1 flex-col overflow-hidden">
-          <Header currentPage={currentPage} onNavigate={handleNavigate} />
-          <PageContainer>{children}</PageContainer>
+          <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 lg:p-6">
+            {children}
+          </main>
         </div>
+
+        <InstallPrompt />
       </div>
     </TooltipProvider>
-  )
+  );
 }
 
-export { AppLayout }
+export default AppLayout;

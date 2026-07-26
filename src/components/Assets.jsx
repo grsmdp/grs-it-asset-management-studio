@@ -3,10 +3,11 @@ import { deleteAsset, getAssets, loadMasterData } from "../services/assetService
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TableRow, TableCell } from "@/components/ui/table";
+import PageHeader from "@/components/layout/PageHeader";
+import FilterCard from "@/components/layout/FilterCard";
+import TableCard from "@/components/layout/TableCard";
 import { Plus, Pencil, Trash2, RefreshCw, Package } from "lucide-react";
 
 function statusBadgeVariant(status) {
@@ -23,6 +24,16 @@ function statusBadgeVariant(status) {
       return "default";
   }
 }
+
+const columns = [
+  { label: "Asset Code" },
+  { label: "Asset Name" },
+  { label: "Category" },
+  { label: "Location" },
+  { label: "Department" },
+  { label: "Status" },
+  { label: "Actions", className: "text-right" },
+];
 
 function Assets({ setCurrentPage, onEditAsset }) {
   const [assets, setAssets] = useState([]);
@@ -102,137 +113,110 @@ function Assets({ setCurrentPage, onEditAsset }) {
   });
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">IT Asset Register</h2>
-          <p className="text-sm text-muted-foreground">
-            Total Assets: <span className="font-semibold">{filteredAssets.length}</span>
-          </p>
-        </div>
-
-        <Button size="sm" onClick={() => setCurrentPage("addAsset")}>
+    <div className="space-y-5">
+      <PageHeader
+        pretitle="INVENTORY"
+        title="IT Asset Register"
+        subtitle={`Showing ${filteredAssets.length} of ${assets.length} assets`}
+        accent="#20c997"
+      >
+        <Button
+          size="sm"
+          className="bg-green-600 hover:bg-green-700 text-white"
+          onClick={() => setCurrentPage("addAsset")}
+        >
           <Plus className="mr-1 h-4 w-4" />
           Add Asset
         </Button>
-      </div>
+      </PageHeader>
 
-      <Card className="border-0 shadow-sm">
-        <CardContent className="py-3">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center">
-            <div className="flex-1">
-              <Input
-                placeholder="Search asset code, name, or brand"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
+      <FilterCard>
+        <div className="flex-1 min-w-0 sm:max-w-xs">
+          <Input
+            placeholder="Search asset code, name, or brand"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
 
-            <div className="w-full md:w-48">
-              <Select value={statusFilter || "__all__"} onValueChange={(v) => setStatusFilter(v === "__all__" ? "" : v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Statuses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all__">All Statuses</SelectItem>
-                  <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Spare">Spare</SelectItem>
-                  <SelectItem value="Under Repair">Under Repair</SelectItem>
-                  <SelectItem value="Scrapped">Scrapped</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        <div className="w-full sm:w-44">
+          <Select
+            value={statusFilter || "__all__"}
+            onValueChange={(v) => setStatusFilter(v === "__all__" ? "" : v)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="All Statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">All Statuses</SelectItem>
+              <SelectItem value="Active">Active</SelectItem>
+              <SelectItem value="Spare">Spare</SelectItem>
+              <SelectItem value="Under Repair">Under Repair</SelectItem>
+              <SelectItem value="Scrapped">Scrapped</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-            <Button variant="outline" size="sm" onClick={loadAssets} className="md:w-auto w-full">
-              <RefreshCw className="mr-1 h-4 w-4" />
-              Refresh
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        <Button variant="outline" size="sm" onClick={loadAssets}>
+          <RefreshCw className="mr-1 h-4 w-4" />
+          Refresh
+        </Button>
+      </FilterCard>
 
-      <Card className="border-0 shadow-sm">
-        <Table className="text-sm">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Asset Code</TableHead>
-              <TableHead>Asset Name</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Department</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
+      <TableCard
+        title="Assets"
+        count={filteredAssets.length}
+        columns={columns}
+        data={filteredAssets}
+        loading={loading}
+        emptyMessage="No assets found"
+        emptyIcon={Package}
+        renderRow={(asset) => (
+          <TableRow key={asset.id} className="hover:bg-slate-50 transition-colors">
+            <TableCell className="font-semibold">{asset.asset_code}</TableCell>
+            <TableCell>{asset.asset_name}</TableCell>
+            <TableCell>
+              {lookupMaps.categories[asset.category_id] || "-"}
+            </TableCell>
+            <TableCell>
+              {lookupMaps.locations[
+                asset.current_location_id || asset.location_id
+              ] || "-"}
+            </TableCell>
+            <TableCell>
+              {lookupMaps.departments[asset.department_id] || "-"}
+            </TableCell>
+            <TableCell>
+              <Badge variant={statusBadgeVariant(asset.status)}>
+                {asset.status}
+              </Badge>
+            </TableCell>
+            <TableCell className="text-right">
+              <div className="flex justify-end gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onEditAsset(asset.id)}
+                  title="Edit"
+                  className="h-8 w-8 text-slate-400 hover:text-amber-600"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
 
-          <TableBody>
-            {loading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
-                  {Array.from({ length: 7 }).map((_, j) => (
-                    <TableCell key={j}>
-                      <Skeleton className="h-4 w-full" />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : filteredAssets.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="py-12 text-center">
-                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                    <Package className="h-8 w-8" />
-                    <p>No assets found</p>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredAssets.map((asset) => (
-                <TableRow key={asset.id}>
-                  <TableCell className="font-semibold">{asset.asset_code}</TableCell>
-                  <TableCell>{asset.asset_name}</TableCell>
-                  <TableCell>
-                    {lookupMaps.categories[asset.category_id] || "-"}
-                  </TableCell>
-                  <TableCell>
-                    {lookupMaps.locations[
-                      asset.current_location_id || asset.location_id
-                    ] || "-"}
-                  </TableCell>
-                  <TableCell>
-                    {lookupMaps.departments[asset.department_id] || "-"}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={statusBadgeVariant(asset.status)}>
-                      {asset.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onEditAsset(asset.id)}
-                        title="Edit"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(asset.id)}
-                        title="Delete"
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </Card>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDelete(asset.id)}
+                  title="Delete"
+                  className="h-8 w-8 text-slate-400 hover:text-red-600"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </TableCell>
+          </TableRow>
+        )}
+      />
     </div>
   );
 }

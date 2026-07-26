@@ -18,10 +18,12 @@ import {
   Headset,
   FolderOpen,
   ChevronRight,
-  Wifi,
-  Database,
+  AlertCircle,
+  Package,
+  TrendingUp,
+  Users,
+  FileText,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   getDashboardStats,
   getRecentAssets,
@@ -30,13 +32,6 @@ import {
   getDepartments,
 } from "../services/assetService";
 import { getTicketStats } from "../services/helpdeskService";
-
-const STATUS_COLORS = {
-  Active: { bar: "bg-emerald-500", text: "text-emerald-600", bg: "bg-emerald-50" },
-  "Under Repair": { bar: "bg-amber-500", text: "text-amber-600", bg: "bg-amber-50" },
-  Spare: { bar: "bg-violet-500", text: "text-violet-600", bg: "bg-violet-50" },
-  Scrapped: { bar: "bg-slate-400", text: "text-slate-500", bg: "bg-slate-50" },
-};
 
 function Dashboard({ setCurrentPage }) {
   const [stats, setStats] = useState(null);
@@ -118,26 +113,26 @@ function Dashboard({ setCurrentPage }) {
       {
         label: "Active",
         count: stats.activeAssets,
-        color: "bg-emerald-500",
-        textColor: "text-emerald-600",
+        hex: "#20c997",
+        light: "#ecfdf5",
       },
       {
         label: "Under Repair",
         count: stats.repairAssets,
-        color: "bg-amber-500",
-        textColor: "text-amber-600",
+        hex: "#f59f00",
+        light: "#fffbeb",
       },
       {
         label: "Spare",
         count: stats.spareAssets,
-        color: "bg-violet-500",
-        textColor: "text-violet-600",
+        hex: "#6f42c1",
+        light: "#f3f0ff",
       },
       {
         label: "Scrapped",
         count: stats.scrappedAssets,
-        color: "bg-slate-400",
-        textColor: "text-slate-500",
+        hex: "#94a3b8",
+        light: "#f1f5f9",
       },
     ].map((d) => ({ ...d, pct: Math.round((d.count / total) * 100) }));
   }, [stats]);
@@ -156,86 +151,54 @@ function Dashboard({ setCurrentPage }) {
     day: "numeric",
   });
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
-          <p className="text-sm text-slate-500">Loading dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  const quickActions = [
-    {
-      label: "Add Asset",
-      icon: Plus,
-      page: "addAsset",
-      color: "bg-blue-50 text-blue-600 hover:bg-blue-100",
-    },
-    {
-      label: "Transfer",
-      icon: ArrowLeftRight,
-      page: "movement",
-      color: "bg-cyan-50 text-cyan-600 hover:bg-cyan-100",
-    },
-    {
-      label: "Repair",
-      icon: Wrench,
-      page: "maintenance",
-      color: "bg-amber-50 text-amber-600 hover:bg-amber-100",
-    },
-    {
-      label: "Reports",
-      icon: BarChart3,
-      page: "reports",
-      color: "bg-emerald-50 text-emerald-600 hover:bg-emerald-100",
-    },
-  ];
-
-  const statCards = [
+  const KPI_BASE = [
     {
       label: "Total Assets",
-      value: stats?.totalAssets ?? "--",
+      value: stats?.totalAssets,
       icon: Monitor,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
+      hex: "#066fd1",
+      light: "#eef4ff",
+      change: null,
     },
     {
-      label: "Active Assets",
-      value: stats?.activeAssets ?? "--",
+      label: "Active",
+      value: stats?.activeAssets,
       icon: CheckCircle2,
-      color: "text-emerald-600",
-      bg: "bg-emerald-50",
+      hex: "#20c997",
+      light: "#ecfdf5",
+      change: stats ? Math.round((stats.activeAssets / stats.totalAssets) * 100) + "%" : null,
     },
     {
       label: "Under Repair",
-      value: stats?.repairAssets ?? "--",
+      value: stats?.repairAssets,
       icon: Wrench,
-      color: "text-amber-600",
-      bg: "bg-amber-50",
+      hex: "#f59f00",
+      light: "#fffbeb",
+      change: null,
     },
     {
-      label: "Spare Assets",
-      value: stats?.spareAssets ?? "--",
+      label: "Spare",
+      value: stats?.spareAssets,
       icon: FolderOpen,
-      color: "text-violet-600",
-      bg: "bg-violet-50",
+      hex: "#6f42c1",
+      light: "#f3f0ff",
+      change: null,
     },
     {
       label: "Scrapped",
-      value: stats?.scrappedAssets ?? "--",
+      value: stats?.scrappedAssets,
       icon: Trash2,
-      color: "text-slate-500",
-      bg: "bg-slate-100",
+      hex: "#94a3b8",
+      light: "#f1f5f9",
+      change: null,
     },
     {
       label: "Warranty Expiring",
-      value: stats?.warrantyExpiring ?? "--",
+      value: stats?.warrantyExpiring,
       icon: ShieldAlert,
-      color: "text-red-600",
-      bg: "bg-red-50",
+      hex: "#dc3545",
+      light: "#fef2f2",
+      change: null,
     },
   ];
 
@@ -246,478 +209,717 @@ function Dashboard({ setCurrentPage }) {
     Scrapped: "bg-slate-100 text-slate-600",
   };
 
-  const ticketPriorityColor = {
-    Critical: "bg-red-100 text-red-700",
-    High: "bg-orange-100 text-orange-700",
-    Medium: "bg-amber-100 text-amber-700",
-    Low: "bg-sky-100 text-sky-700",
-  };
-
   const healthItems = [
     {
-      label: "Supabase",
+      label: "Supabase Connection",
       ok: stats !== null,
       detail: stats !== null ? "Connected" : "Unreachable",
     },
     {
-      label: "Asset Data",
+      label: "Asset Records",
       ok: allAssets.length > 0,
       detail: allAssets.length > 0 ? `${allAssets.length} records` : "No data",
+      count: allAssets.length,
     },
     {
       label: "Ticket System",
       ok: ticketStats !== null,
       detail: ticketStats !== null ? `${ticketStats.totalCount || 0} tickets` : "Unavailable",
+      count: ticketStats?.totalCount || 0,
     },
     {
-      label: "Service Worker",
-      ok: "serviceWorker" in navigator,
-      detail: "serviceWorker" in navigator ? "Supported" : "Not supported",
+      label: "Maintenance Log",
+      ok: (stats?.maintenanceCount ?? 0) > 0,
+      detail: stats?.maintenanceCount ? `${stats.maintenanceCount} records` : "No records",
+      count: stats?.maintenanceCount || 0,
     },
   ];
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative h-10 w-10">
+            <div className="absolute inset-0 rounded-full border-2 border-slate-200" />
+            <div className="absolute inset-0 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
+          </div>
+          <p className="text-sm font-medium text-slate-400">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
+      {/* Error banner */}
       {error && (
-        <div className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          <AlertTriangle className="h-4 w-4 shrink-0" />
-          <span className="flex-1">{error}</span>
-          <button
-            onClick={() => setError(null)}
-            className="ml-2 text-amber-600 hover:text-amber-800"
-          >
-            Dismiss
-          </button>
+        <div className="group relative overflow-hidden rounded-2xl border border-red-200/60 bg-white p-4 shadow-sm">
+          <div className="absolute inset-0 bg-gradient-to-r from-red-50/50" />
+          <div className="relative flex items-start gap-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-red-50">
+              <AlertTriangle className="h-4 w-4 text-red-500" />
+            </div>
+            <div className="flex-1 pt-0.5">
+              <p className="text-sm font-medium text-red-800">{error}</p>
+            </div>
+            <button
+              onClick={() => setError(null)}
+              className="shrink-0 rounded-lg p-1 text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+            >
+              Dismiss
+            </button>
+          </div>
         </div>
       )}
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            {greeting}, IT Administrator
-          </h1>
-          <div className="mt-1 flex items-center gap-2 text-sm text-slate-500">
-            <Calendar className="h-4 w-4" />
-            <span>{dateStr}</span>
-          </div>
-          <p className="mt-1 text-sm text-slate-400">
-            Overview of your IT asset inventory
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {quickActions.map((action) => {
-            const Icon = action.icon;
-            return (
+      {/* Greeting + Quick Actions */}
+      <div className="relative overflow-hidden rounded-2xl bg-white shadow-sm border border-slate-200/60">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/40 via-white to-transparent" />
+        <div className="relative px-6 py-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-blue-600 mb-1">
+                {dateStr}
+              </p>
+              <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">
+                {greeting}, IT Administrator
+              </h1>
+              <p className="mt-0.5 text-sm text-slate-400">
+                Here's what's happening with your assets today.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
               <button
-                key={action.label}
-                onClick={() => setCurrentPage(action.page)}
-                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${action.color}`}
+                onClick={() => setCurrentPage("addAsset")}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 hover:from-blue-600 hover:to-blue-800 active:scale-[0.97] transition-all duration-150"
               >
-                <Icon className="h-4 w-4" />
-                {action.label}
+                <Plus className="h-3.5 w-3.5" />
+                Add Asset
               </button>
-            );
-          })}
-          <button
-            onClick={loadDashboard}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Refresh
-          </button>
+              <button
+                onClick={() => setCurrentPage("movement")}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50 hover:shadow active:scale-[0.97] transition-all duration-150"
+              >
+                <ArrowLeftRight className="h-3.5 w-3.5" />
+                Transfer
+              </button>
+              <button
+                onClick={() => setCurrentPage("maintenance")}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50 hover:shadow active:scale-[0.97] transition-all duration-150"
+              >
+                <Wrench className="h-3.5 w-3.5" />
+                Repair
+              </button>
+              <button
+                onClick={() => setCurrentPage("reports")}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50 hover:shadow active:scale-[0.97] transition-all duration-150"
+              >
+                <BarChart3 className="h-3.5 w-3.5" />
+                Reports
+              </button>
+              <div className="h-6 w-px bg-slate-200 mx-0.5" />
+              <button
+                onClick={loadDashboard}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium text-slate-500 shadow-sm hover:bg-slate-50 hover:text-slate-700 active:scale-[0.97] transition-all duration-150"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                Refresh
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* KPI Cards */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-        {statCards.map((card) => {
-          const Icon = card.icon;
+        {KPI_BASE.map((kpi) => {
+          const Icon = kpi.icon;
           return (
-            <Card key={card.label} className="border-0 shadow-sm">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${card.bg}`}
-                  >
-                    <Icon className={`h-5 w-5 ${card.color}`} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-slate-500 truncate">
-                      {card.label}
-                    </p>
-                    <p className="text-xl font-bold text-slate-900">
-                      {card.value}
-                    </p>
-                  </div>
+            <div
+              key={kpi.label}
+              className="group relative overflow-hidden rounded-2xl bg-white shadow-sm border border-slate-200/60 p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+            >
+              <div
+                className="absolute top-0 left-0 w-full h-1 rounded-t-2xl"
+                style={{ backgroundColor: kpi.hex }}
+              />
+              <div className="flex items-center gap-3">
+                <div
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
+                  style={{ backgroundColor: kpi.light }}
+                >
+                  <Icon
+                    className="h-5 w-5"
+                    style={{ color: kpi.hex }}
+                    strokeWidth={2}
+                  />
                 </div>
-              </CardContent>
-            </Card>
+                <div className="min-w-0">
+                  <p
+                    className="text-2xl font-bold tracking-tight"
+                    style={{ color: kpi.hex }}
+                  >
+                    {kpi.value ?? "--"}
+                  </p>
+                  <p className="text-[11px] font-medium text-slate-500 mt-0.5">
+                    {kpi.label}
+                  </p>
+                </div>
+              </div>
+              {kpi.change && (
+                <div className="mt-3 flex items-center gap-1 text-[11px] font-medium text-emerald-600">
+                  <TrendingUp className="h-3 w-3" />
+                  {kpi.change} of total
+                </div>
+              )}
+              <div className="absolute right-0 top-0 h-16 w-16 translate-x-4 -translate-y-4 opacity-[0.03]">
+                <Icon className="h-full w-full" style={{ color: kpi.hex }} />
+              </div>
+            </div>
           );
         })}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-base flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 text-blue-500" />
-              Asset Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {assetStatusData.length > 0 ? (
-              <div className="space-y-4">
-                {assetStatusData.map((item) => (
-                  <div key={item.label}>
-                    <div className="mb-1.5 flex items-center justify-between text-sm">
-                      <span className="font-medium text-slate-700">
+      {/* Charts Row */}
+      <div className="grid gap-6 lg:grid-cols-5">
+        {/* Asset Health Bar Chart */}
+        <div className="lg:col-span-2 relative overflow-hidden rounded-2xl bg-white shadow-sm border border-slate-200/60 p-5">
+          <div className="flex items-center gap-2.5 mb-5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50">
+              <Activity className="h-4 w-4 text-emerald-600" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900">Asset Health</h3>
+              <p className="text-[11px] text-slate-400">Status breakdown</p>
+            </div>
+          </div>
+          {assetStatusData.length > 0 ? (
+            <div className="space-y-4">
+              {assetStatusData.map((item, i) => (
+                <div key={item.label}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="h-2.5 w-2.5 rounded-full"
+                        style={{ backgroundColor: item.hex }}
+                      />
+                      <span className="text-xs font-medium text-slate-700">
                         {item.label}
                       </span>
-                      <span className={item.textColor}>
-                        {item.count}{" "}
-                        <span className="text-slate-400">({item.pct}%)</span>
+                    </div>
+                    <span className="text-xs font-semibold text-slate-900">
+                      {item.count}
+                      <span className="text-slate-400 font-normal ml-1">
+                        ({item.pct}%)
+                      </span>
+                    </span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className="h-full rounded-full transition-all duration-700 ease-out"
+                      style={{
+                        width: `${Math.max(item.pct, 2)}%`,
+                        backgroundColor: item.hex,
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+              <div className="pt-3 border-t border-slate-100">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-400">Total assets</span>
+                  <span className="font-semibold text-slate-900">
+                    {stats?.totalAssets ?? 0}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 text-slate-400">
+              <Package className="h-8 w-8 mb-2 opacity-40" />
+              <p className="text-xs font-medium">No asset data available</p>
+            </div>
+          )}
+        </div>
+
+        {/* Department Overview */}
+        <div className="lg:col-span-3 relative overflow-hidden rounded-2xl bg-white shadow-sm border border-slate-200/60 p-5">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-50">
+                <Users className="h-4 w-4 text-violet-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900">
+                  Department Overview
+                </h3>
+                <p className="text-[11px] text-slate-400">
+                  Asset distribution across departments
+                </p>
+              </div>
+            </div>
+            <span className="text-xs font-medium text-slate-400">
+              {deptDistribution.reduce((s, d) => s + d.count, 0)} assets
+            </span>
+          </div>
+          {deptDistribution.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {deptDistribution.map((dept, i) => {
+                const maxCount = deptDistribution[0]?.count || 1;
+                const pct = Math.round((dept.count / maxCount) * 100);
+                const colors = [
+                  { bar: "#066fd1", bg: "#eef4ff" },
+                  { bar: "#20c997", bg: "#ecfdf5" },
+                  { bar: "#6f42c1", bg: "#f3f0ff" },
+                  { bar: "#f59f00", bg: "#fffbeb" },
+                  { bar: "#dc3545", bg: "#fef2f2" },
+                  { bar: "#15aabf", bg: "#ecfdf5" },
+                ];
+                const c = colors[i % colors.length];
+                return (
+                  <div
+                    key={dept.name}
+                    className="rounded-xl p-3.5 transition-all duration-150 hover:shadow-sm"
+                    style={{ backgroundColor: c.bg }}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-semibold text-slate-800 truncate max-w-[70%]">
+                        {dept.name}
+                      </span>
+                      <span className="text-xs font-bold" style={{ color: c.bar }}>
+                        {dept.count}
                       </span>
                     </div>
-                    <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
+                    <div className="h-1.5 overflow-hidden rounded-full bg-white/60">
                       <div
-                        className={`h-full rounded-full transition-all duration-500 ${item.color}`}
-                        style={{ width: `${Math.max(item.pct, 1)}%` }}
+                        className="h-full rounded-full transition-all duration-700 ease-out"
+                        style={{ width: `${Math.max(pct, 2)}%`, backgroundColor: c.bar }}
                       />
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="py-8 text-center text-sm text-slate-400">
-                No asset data available
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-base flex items-center gap-2">
-              <FolderOpen className="h-4 w-4 text-violet-500" />
-              Department Distribution
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {deptDistribution.length > 0 ? (
-              <div className="space-y-4">
-                {deptDistribution.map((dept) => {
-                  const maxCount = deptDistribution[0]?.count || 1;
-                  const pct = Math.round((dept.count / maxCount) * 100);
-                  return (
-                    <div key={dept.name}>
-                      <div className="mb-1.5 flex items-center justify-between text-sm">
-                        <span className="font-medium text-slate-700 truncate max-w-[60%]">
-                          {dept.name}
-                        </span>
-                        <span className="text-slate-500">{dept.count}</span>
-                      </div>
-                      <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
-                        <div
-                          className="h-full rounded-full bg-violet-500 transition-all duration-500"
-                          style={{ width: `${Math.max(pct, 2)}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="py-8 text-center text-sm text-slate-400">
-                No department data available
-              </p>
-            )}
-          </CardContent>
-        </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 text-slate-400">
+              <Users className="h-8 w-8 mb-2 opacity-40" />
+              <p className="text-xs font-medium">No department data available</p>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base flex items-center gap-2">
-                <ArrowRightLeft className="h-4 w-4 text-cyan-500" />
-                Recent Asset Movements
-              </CardTitle>
-              <button
-                onClick={() => setCurrentPage("movement")}
-                className="text-xs font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1"
-              >
-                View All
-                <ChevronRight className="h-3 w-3" />
-              </button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {recentMovements.length > 0 ? (
-              <div className="space-y-3">
-                {recentMovements.map((m) => (
-                  <div
-                    key={m.id}
-                    className="flex items-center gap-3 rounded-lg border border-slate-100 p-3"
-                  >
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyan-50">
-                      <ArrowRightLeft className="h-4 w-4 text-cyan-600" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-slate-700">
-                        {m.asset?.asset_name || m.asset?.asset_code || "Asset moved"}
-                      </p>
-                      <p className="text-xs text-slate-400">
-                        {m.from_location?.location_name || "?"} →{" "}
-                        {m.to_location?.location_name || "?"}
-                      </p>
-                    </div>
-                    <span className="shrink-0 text-xs text-slate-400">
-                      {new Date(m.movement_date || m.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                ))}
+      {/* Middle Row */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Recent Activities */}
+        <div className="lg:col-span-2 relative overflow-hidden rounded-2xl bg-white shadow-sm border border-slate-200/60 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50">
+                <ArrowRightLeft className="h-4 w-4 text-blue-600" />
               </div>
-            ) : (
-              <p className="py-8 text-center text-sm text-slate-400">
-                No recent movements
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Headset className="h-4 w-4 text-orange-500" />
-                Helpdesk Summary
-              </CardTitle>
-              <button
-                onClick={() => setCurrentPage("helpdesk")}
-                className="text-xs font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1"
-              >
-                Open Helpdesk
-                <ChevronRight className="h-3 w-3" />
-              </button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {ticketStats ? (
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  {
-                    label: "Open",
-                    value: ticketStats.openCount,
-                    color: "bg-blue-50 text-blue-700",
-                  },
-                  {
-                    label: "Assigned",
-                    value: ticketStats.assignedCount,
-                    color: "bg-violet-50 text-violet-700",
-                  },
-                  {
-                    label: "In Progress",
-                    value: ticketStats.inProgressCount,
-                    color: "bg-amber-50 text-amber-700",
-                  },
-                  {
-                    label: "Completed Today",
-                    value: ticketStats.completedToday,
-                    color: "bg-emerald-50 text-emerald-700",
-                  },
-                  {
-                    label: "Critical",
-                    value: ticketStats.criticalCount,
-                    color: "bg-red-50 text-red-700",
-                  },
-                  {
-                    label: "Closed (Month)",
-                    value: ticketStats.closedThisMonth,
-                    color: "bg-slate-100 text-slate-600",
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    className={`rounded-xl p-3 ${item.color}`}
-                  >
-                    <p className="text-2xl font-bold">{item.value ?? 0}</p>
-                    <p className="text-xs font-medium opacity-80">{item.label}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="py-8 text-center text-sm text-slate-400">
-                Ticket data unavailable
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Clock className="h-4 w-4 text-amber-500" />
-              Maintenance Overview
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-xl border border-slate-100 p-4">
-                <div className="flex items-center gap-2 text-sm text-slate-500">
-                  <Wrench className="h-4 w-4" />
-                  Total Records
-                </div>
-                <p className="mt-1 text-2xl font-bold text-slate-900">
-                  {stats?.maintenanceCount ?? "--"}
-                </p>
-              </div>
-              <div className="rounded-xl border border-slate-100 p-4">
-                <div className="flex items-center gap-2 text-sm text-slate-500">
-                  <ArrowRightLeft className="h-4 w-4" />
-                  Total Movements
-                </div>
-                <p className="mt-1 text-2xl font-bold text-slate-900">
-                  {stats?.movementCount ?? "--"}
-                </p>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900">
+                  Recent Asset Movements
+                </h3>
+                <p className="text-[11px] text-slate-400">Latest location changes</p>
               </div>
             </div>
-            <div className="mt-4 rounded-xl border border-slate-100 p-4">
-              <p className="text-sm font-medium text-slate-700">Warranty Alerts</p>
-              <p className="mt-1 text-sm text-slate-500">
-                {stats?.warrantyExpiring ?? 0} asset
-                {(stats?.warrantyExpiring ?? 0) !== 1 ? "s" : ""} with warranty
-                expiring within the next 30 days.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Server className="h-4 w-4 text-slate-500" />
-              System Health
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {healthItems.map((item) => (
-                <div
-                  key={item.label}
-                  className="flex items-center justify-between rounded-lg border border-slate-100 p-3"
-                >
-                  <div className="flex items-center gap-3">
-                    {item.ok ? (
-                      <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
-                    ) : (
-                      <span className="flex h-2.5 w-2.5 rounded-full bg-red-400" />
-                    )}
-                    <span className="text-sm font-medium text-slate-700">
-                      {item.label}
-                    </span>
-                  </div>
-                  <span
-                    className={`text-xs font-medium ${item.ok ? "text-emerald-600" : "text-red-500"}`}
-                  >
-                    {item.detail}
-                  </span>
-                </div>
-              ))}
-            </div>
-            {loadTimestamp && (
-              <p className="mt-4 text-center text-xs text-slate-400">
-                Last refreshed:{" "}
-                {loadTimestamp.toLocaleTimeString()}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="border-0 shadow-sm">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Activity className="h-4 w-4 text-blue-500" />
-              Recently Added Assets
-            </CardTitle>
             <button
-              onClick={() => setCurrentPage("assets")}
-              className="text-xs font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1"
+              onClick={() => setCurrentPage("movement")}
+              className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-500 transition-colors"
             >
               View All
               <ChevronRight className="h-3 w-3" />
             </button>
           </div>
-        </CardHeader>
-        <CardContent>
-          {recentAssets.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-100">
-                    <th className="pb-2 text-left font-medium text-slate-500">
-                      Asset Code
-                    </th>
-                    <th className="pb-2 text-left font-medium text-slate-500">
-                      Name
-                    </th>
-                    <th className="hidden pb-2 text-left font-medium text-slate-500 sm:table-cell">
-                      Category
-                    </th>
-                    <th className="hidden pb-2 text-left font-medium text-slate-500 md:table-cell">
-                      Location
-                    </th>
-                    <th className="hidden pb-2 text-left font-medium text-slate-500 lg:table-cell">
-                      Department
-                    </th>
-                    <th className="pb-2 text-left font-medium text-slate-500">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentAssets.map((asset) => (
-                    <tr
-                      key={asset.id}
-                      className="border-b border-slate-50 last:border-0"
-                    >
-                      <td className="py-2.5 font-semibold text-slate-700">
-                        {asset.asset_code}
-                      </td>
-                      <td className="py-2.5 text-slate-600">
-                        {asset.asset_name}
-                      </td>
-                      <td className="hidden py-2.5 text-slate-500 sm:table-cell">
-                        {asset.asset_categories?.category_name || "-"}
-                      </td>
-                      <td className="hidden py-2.5 text-slate-500 md:table-cell">
-                        {asset.current_location?.location_name || "-"}
-                      </td>
-                      <td className="hidden py-2.5 text-slate-500 lg:table-cell">
-                        {asset.departments?.department_name || "-"}
-                      </td>
-                      <td className="py-2.5">
-                        <span
-                          className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColorMap[asset.status] || "bg-slate-100 text-slate-600"}`}
-                        >
-                          {asset.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {recentMovements.length > 0 ? (
+            <div className="space-y-2">
+              {recentMovements.map((m, i) => (
+                <div
+                  key={m.id}
+                  className="group flex items-center gap-3 rounded-xl p-3 transition-all duration-150 hover:bg-slate-50"
+                  style={{ animationDelay: `${i * 50}ms` }}
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 group-hover:bg-blue-100 transition-colors">
+                    <ArrowRightLeft className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-slate-700 truncate">
+                      {m.asset?.asset_name || m.asset?.asset_code || "Asset moved"}
+                    </p>
+                    <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                      <span>{m.from_location?.location_name || "?"}</span>
+                      <ArrowRightLeft className="h-2.5 w-2.5" />
+                      <span>{m.to_location?.location_name || "?"}</span>
+                    </div>
+                  </div>
+                  <span className="shrink-0 text-[11px] font-medium text-slate-400">
+                    {new Date(m.movement_date || m.created_at).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
+                </div>
+              ))}
             </div>
           ) : (
-            <p className="py-8 text-center text-sm text-slate-400">
+            <div className="flex flex-col items-center justify-center py-8 text-slate-400">
+              <ArrowRightLeft className="h-8 w-8 mb-2 opacity-40" />
+              <p className="text-xs font-medium">No recent movements</p>
+            </div>
+          )}
+        </div>
+
+        {/* Right Column: Quick Actions + Health */}
+        <div className="space-y-6">
+          {/* Quick Actions */}
+          <div className="relative overflow-hidden rounded-2xl bg-white shadow-sm border border-slate-200/60 p-5">
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100">
+                <Package className="h-4 w-4 text-slate-600" />
+              </div>
+              <h3 className="text-sm font-semibold text-slate-900">Quick Actions</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setCurrentPage("addAsset")}
+                className="flex flex-col items-center gap-2 rounded-xl border border-slate-200 bg-white p-4 hover:bg-blue-50 hover:border-blue-200 hover:shadow-sm active:scale-[0.97] transition-all duration-150"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50">
+                  <Plus className="h-4 w-4 text-blue-600" />
+                </div>
+                <span className="text-[11px] font-semibold text-slate-700">Add Asset</span>
+              </button>
+              <button
+                onClick={() => setCurrentPage("movement")}
+                className="flex flex-col items-center gap-2 rounded-xl border border-slate-200 bg-white p-4 hover:bg-amber-50 hover:border-amber-200 hover:shadow-sm active:scale-[0.97] transition-all duration-150"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-50">
+                  <ArrowLeftRight className="h-4 w-4 text-amber-600" />
+                </div>
+                <span className="text-[11px] font-semibold text-slate-700">Transfer</span>
+              </button>
+              <button
+                onClick={() => setCurrentPage("maintenance")}
+                className="flex flex-col items-center gap-2 rounded-xl border border-slate-200 bg-white p-4 hover:bg-emerald-50 hover:border-emerald-200 hover:shadow-sm active:scale-[0.97] transition-all duration-150"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50">
+                  <Wrench className="h-4 w-4 text-emerald-600" />
+                </div>
+                <span className="text-[11px] font-semibold text-slate-700">Repair</span>
+              </button>
+              <button
+                onClick={() => setCurrentPage("reports")}
+                className="flex flex-col items-center gap-2 rounded-xl border border-slate-200 bg-white p-4 hover:bg-purple-50 hover:border-purple-200 hover:shadow-sm active:scale-[0.97] transition-all duration-150"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-50">
+                  <FileText className="h-4 w-4 text-purple-600" />
+                </div>
+                <span className="text-[11px] font-semibold text-slate-700">Reports</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Warranty + Repair Summary */}
+          <div className="grid grid-cols-1 gap-4">
+            {/* Warranty Expiry */}
+            <div className="relative overflow-hidden rounded-2xl bg-white shadow-sm border border-slate-200/60 p-5">
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-50">
+                  <ShieldAlert className="h-4 w-4 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-900">
+                    Warranty Expiry
+                  </h3>
+                </div>
+              </div>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-3xl font-bold text-red-600">
+                  {stats?.warrantyExpiring ?? 0}
+                </span>
+                <span className="text-xs text-slate-400">assets</span>
+              </div>
+              <p className="mt-1 text-[11px] text-slate-400 leading-relaxed">
+                Assets with warranty expiring within the next 30 days.
+              </p>
+              {(stats?.warrantyExpiring ?? 0) > 0 && (
+                <div className="mt-3 flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-2">
+                  <AlertCircle className="h-3.5 w-3.5 text-red-500" />
+                  <span className="text-[11px] font-medium text-red-700">
+                    Review required soon
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Repair Summary */}
+            <div className="relative overflow-hidden rounded-2xl bg-white shadow-sm border border-slate-200/60 p-5">
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50">
+                  <Wrench className="h-4 w-4 text-amber-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-900">
+                    Repair Summary
+                  </h3>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-xl bg-slate-50 p-3">
+                  <p className="text-xs text-slate-400">Maintenance</p>
+                  <p className="text-lg font-bold text-slate-900 mt-0.5">
+                    {stats?.maintenanceCount ?? 0}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-slate-50 p-3">
+                  <p className="text-xs text-slate-400">Movements</p>
+                  <p className="text-lg font-bold text-slate-900 mt-0.5">
+                    {stats?.movementCount ?? 0}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Helpdesk Summary Bar */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-500/5 to-violet-500/10 shadow-sm border border-violet-200/40 p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-100">
+              <Headset className="h-4 w-4 text-violet-700" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900">Helpdesk Overview</h3>
+              <p className="text-[11px] text-violet-500/70">
+                Ticket status breakdown
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setCurrentPage("helpdesk")}
+            className="flex items-center gap-1 text-xs font-medium text-violet-600 hover:text-violet-500 transition-colors"
+          >
+            Open Helpdesk
+            <ChevronRight className="h-3 w-3" />
+          </button>
+        </div>
+        {ticketStats ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {[
+              {
+                label: "Open",
+                value: ticketStats.openCount,
+                hex: "#066fd1",
+                light: "#eef4ff",
+              },
+              {
+                label: "Assigned",
+                value: ticketStats.assignedCount,
+                hex: "#6f42c1",
+                light: "#f3f0ff",
+              },
+              {
+                label: "In Progress",
+                value: ticketStats.inProgressCount,
+                hex: "#f59f00",
+                light: "#fffbeb",
+              },
+              {
+                label: "Completed Today",
+                value: ticketStats.completedToday,
+                hex: "#20c997",
+                light: "#ecfdf5",
+              },
+              {
+                label: "Critical",
+                value: ticketStats.criticalCount,
+                hex: "#dc3545",
+                light: "#fef2f2",
+              },
+              {
+                label: "Closed (Month)",
+                value: ticketStats.closedThisMonth,
+                hex: "#64748b",
+                light: "#f1f5f9",
+              },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="rounded-xl p-3 transition-all duration-150 hover:shadow-sm"
+                style={{ backgroundColor: item.light }}
+              >
+                <p className="text-xl font-bold" style={{ color: item.hex }}>
+                  {item.value ?? 0}
+                </p>
+                <p className="text-[11px] font-medium text-slate-500 mt-0.5">
+                  {item.label}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-6 text-slate-400">
+            <Headset className="h-8 w-8 mb-2 opacity-40" />
+            <p className="text-xs font-medium">Ticket data unavailable</p>
+          </div>
+        )}
+      </div>
+
+      {/* System Health */}
+      <div className="relative overflow-hidden rounded-2xl bg-white shadow-sm border border-slate-200/60 p-5">
+        <div className="flex items-center gap-2.5 mb-4">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100">
+            <Server className="h-4 w-4 text-slate-600" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-slate-900">System Health</h3>
+            <p className="text-[11px] text-slate-400">Service status overview</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {healthItems.map((item) => (
+            <div
+              key={item.label}
+              className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/50 p-3.5 hover:bg-slate-50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <span
+                  className={`relative flex h-2.5 w-2.5 ${item.ok ? "" : ""}`}
+                >
+                  <span
+                    className={`absolute inset-0 rounded-full ${item.ok ? "bg-emerald-500" : "bg-red-500"}`}
+                  />
+                  {item.ok && (
+                    <span className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-30" />
+                  )}
+                </span>
+                <div>
+                  <p className="text-xs font-medium text-slate-700">{item.label}</p>
+                  {item.count !== undefined && (
+                    <p className="text-[11px] font-bold text-slate-900">
+                      {item.count}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <span
+                className={`text-[11px] font-medium ${item.ok ? "text-emerald-600" : "text-red-600"}`}
+              >
+                {item.detail}
+              </span>
+            </div>
+          ))}
+        </div>
+        {loadTimestamp && (
+          <div className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
+            <Clock className="h-3 w-3" />
+            Last refreshed: {loadTimestamp.toLocaleTimeString()}
+          </div>
+        )}
+      </div>
+
+      {/* Recently Added Assets */}
+      <div className="relative overflow-hidden rounded-2xl bg-white shadow-sm border border-slate-200/60 p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50">
+              <Monitor className="h-4 w-4 text-blue-600" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900">
+                Recently Added Assets
+              </h3>
+              <p className="text-[11px] text-slate-400">
+                Latest {recentAssets.length} assets
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setCurrentPage("assets")}
+            className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-500 transition-colors"
+          >
+            View All
+            <ChevronRight className="h-3 w-3" />
+          </button>
+        </div>
+        {recentAssets.length > 0 ? (
+          <div className="overflow-x-auto rounded-xl border border-slate-100">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50/80">
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    Asset Code
+                  </th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    Name
+                  </th>
+                  <th className="hidden px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 sm:table-cell">
+                    Category
+                  </th>
+                  <th className="hidden px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 md:table-cell">
+                    Location
+                  </th>
+                  <th className="hidden px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 lg:table-cell">
+                    Department
+                  </th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentAssets.map((asset) => (
+                  <tr
+                    key={asset.id}
+                    className="border-b border-slate-50 transition-colors hover:bg-blue-50/30 last:border-0"
+                  >
+                    <td className="px-4 py-3.5 font-semibold text-slate-700">
+                      {asset.asset_code}
+                    </td>
+                    <td className="px-4 py-3.5 text-slate-600">{asset.asset_name}</td>
+                    <td className="hidden px-4 py-3.5 text-slate-500 sm:table-cell">
+                      {asset.asset_categories?.category_name || "-"}
+                    </td>
+                    <td className="hidden px-4 py-3.5 text-slate-500 md:table-cell">
+                      {asset.current_location?.location_name || "-"}
+                    </td>
+                    <td className="hidden px-4 py-3.5 text-slate-500 lg:table-cell">
+                      {asset.departments?.department_name || "-"}
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          statusColorMap[asset.status] || "bg-slate-100 text-slate-600"
+                        }`}
+                      >
+                        {asset.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-10 text-slate-400">
+            <Monitor className="h-8 w-8 mb-2 opacity-40" />
+            <p className="text-xs font-medium">
               No assets found. Add your first asset to get started.
             </p>
-          )}
-        </CardContent>
-      </Card>
+            <button
+              onClick={() => setCurrentPage("addAsset")}
+              className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition-colors"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add Asset
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

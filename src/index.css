@@ -3,57 +3,130 @@
 @plugin "tailwindcss-animate";
 
 @theme inline {
-  --color-background: hsl(0 0% 100%);
-  --color-foreground: hsl(222.2 84% 4.9%);
-  --color-card: hsl(0 0% 100%);
-  --color-card-foreground: hsl(222.2 84% 4.9%);
-  --color-popover: hsl(0 0% 100%);
-  --color-popover-foreground: hsl(222.2 84% 4.9%);
-  --color-primary: hsl(222.2 47.4% 51.2%);
-  --color-primary-foreground: hsl(210 40% 98%);
-  --color-secondary: hsl(210 40% 96.1%);
-  --color-secondary-foreground: hsl(222.2 47.4% 11.2%);
-  --color-muted: hsl(210 40% 96.1%);
-  --color-muted-foreground: hsl(215.4 16.3% 46.9%);
-  --color-accent: hsl(210 40% 96.1%);
-  --color-accent-foreground: hsl(222.2 47.4% 11.2%);
-  --color-destructive: hsl(0 84.2% 60.2%);
-  --color-destructive-foreground: hsl(210 40% 98%);
-  --color-border: hsl(214.3 31.8% 91.4%);
-  --color-input: hsl(214.3 31.8% 91.4%);
-  --color-ring: hsl(222.2 84% 4.9%);
-  --color-sidebar-background: hsl(222.2 84% 4.9%);
-  --color-sidebar-foreground: hsl(210 40% 98%);
-  --color-sidebar-primary: hsl(210 40% 98%);
-  --color-sidebar-primary-foreground: hsl(222.2 47.4% 51.2%);
-  --color-sidebar-accent: hsl(217.2 32.6% 17.5%);
-  --color-sidebar-accent-foreground: hsl(210 40% 98%);
-  --color-sidebar-border: hsl(217.2 32.6% 17.5%);
-  --color-sidebar-ring: hsl(217.2 32.6% 17.5%);
+  --color-background: #ffffff;
+  --color-foreground: #1e293b;
+  --color-card: #ffffff;
+  --color-card-foreground: #1e293b;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #1e293b;
+  --color-primary: #066fd1;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #f1f5f9;
+  --color-secondary-foreground: #475569;
+  --color-muted: #f1f5f9;
+  --color-muted-foreground: #64748b;
+  --color-accent: #f1f5f9;
+  --color-accent-foreground: #1e293b;
+  --color-destructive: #dc3545;
+  --color-destructive-foreground: #ffffff;
+  --color-border: #e2e8f0;
+  --color-input: #e2e8f0;
+  --color-ring: #066fd1;
   --radius: 0.5rem;
-  --color-chart-1: hsl(12 76% 61%);
-  --color-chart-2: hsl(173 58% 39%);
-  --color-chart-3: hsl(197 37% 24%);
-  --color-chart-4: hsl(43 74% 66%);
-  --color-chart-5: hsl(27 87% 67%);
+  --color-chart-1: #066fd1;
+  --color-chart-2: #20c997;
+  --color-chart-3: #f59f00;
+  --color-chart-4: #dc3545;
+  --color-chart-5: #6f42c1;
+  --color-green: #20c997;
+  --color-red: #dc3545;
+  --color-yellow: #f59f00;
+  --color-blue: #066fd1;
+  --color-cyan: #15aabf;
+  --color-pink: #e64980;
+  --color-purple: #6f42c1;
+  --color-orange: #f76707;
+  --color-slate: #64748b;
+  --animate-fade-in: fade-in 0.4s ease-out;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 :root {
-  font: 16px/1.5 "Segoe UI", system-ui, sans-serif;
-  color-scheme: light;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-foreground);
+  background: #f8fafc;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-body {
-  margin: 0;
-  background: #f4f7fb;
-  color: #1e293b;
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
-h1, h2 {
+body {
+  margin: 0;
+  overflow: hidden;
+}
+
+#root {
+  height: 100vh;
+  overflow: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
-  color: #0f172a;
+  color: #1e293b;
+  margin: 0;
+}
+
+/* Main content scrollbar */
+.app-content::-webkit-scrollbar,
+main::-webkit-scrollbar {
+  width: 6px;
+}
+
+.app-content::-webkit-scrollbar-track,
+main::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.app-content::-webkit-scrollbar-thumb,
+main::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.app-content::-webkit-scrollbar-thumb:hover,
+main::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Sidebar scrollbar */
+.sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 2px;
+}
+
+.sidebar-scroll:hover::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+}
+
+/* Focus ring utility */
+*:focus-visible {
+  outline: 2px solid #066fd1;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Print styles */
+@media print {
+  .print\:hidden {
+    display: none !important;
+  }
 }

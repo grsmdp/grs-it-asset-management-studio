@@ -1,7 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { getReportSummary } from "../services/assetService";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -14,6 +13,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import PageHeader from "@/components/layout/PageHeader";
+import FilterCard from "@/components/layout/FilterCard";
+import StatCard from "@/components/layout/StatCard";
 import {
   Download,
   Printer,
@@ -189,8 +191,9 @@ function Reports() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="space-y-2">
+            <Skeleton className="h-4 w-20" />
             <Skeleton className="h-8 w-32" />
             <Skeleton className="h-4 w-64" />
           </div>
@@ -219,316 +222,292 @@ function Reports() {
     statusCounts[s] = report.statusBreakdown[s] || 0;
   });
 
+  const statCards = [
+    { label: "Total Assets", value: report.assets.length, color: "#3b82f6", borderColor: "#3b82f6" },
+    { label: "Active", value: statusCounts.Active, color: "#22c55e", borderColor: "#22c55e" },
+    { label: "Under Repair", value: statusCounts["Under Repair"], color: "#eab308", borderColor: "#eab308" },
+    { label: "Spare", value: statusCounts.Spare, color: "#06b6d4", borderColor: "#06b6d4" },
+    { label: "Scrapped", value: statusCounts.Scrapped, color: "#9ca3af", borderColor: "#9ca3af" },
+    { label: "Total Value", value: `\u20B9${report.totalValue.toLocaleString()}`, color: "#ef4444", borderColor: "#ef4444" },
+  ];
+
+  const operationalItems = [
+    { label: "Total Movements", value: report.movements.length },
+    { label: "Maintenance Records", value: report.maintenance.length },
+    { label: "Categories", value: report.categories.length },
+    { label: "Locations", value: report.locations.length },
+    { label: "Departments", value: report.departments.length },
+    { label: "Vendors", value: report.vendors.length },
+  ];
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between print:hidden">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Reports</h2>
-          <p className="text-sm text-muted-foreground">
-            Asset inventory summary and operational insights
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleExport}>
-            <Download className="mr-1 h-4 w-4" />
-            Export CSV
-          </Button>
-          <Button variant="outline" size="sm" onClick={handlePrint}>
-            <Printer className="mr-1 h-4 w-4" />
-            Print
-          </Button>
-          <Button variant="outline" size="sm" onClick={loadReport}>
-            <RefreshCw className="mr-1 h-4 w-4" />
-            Refresh
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        pretitle="ANALYTICS"
+        title="Reports"
+        subtitle="Asset inventory summary and insights"
+        accent="#dc3545"
+      >
+        <Button variant="outline" size="sm" onClick={handleExport}>
+          <Download className="mr-1 h-4 w-4" />
+          Export CSV
+        </Button>
+        <Button variant="outline" size="sm" onClick={handlePrint}>
+          <Printer className="mr-1 h-4 w-4" />
+          Print
+        </Button>
+        <Button variant="outline" size="sm" onClick={loadReport}>
+          <RefreshCw className="mr-1 h-4 w-4" />
+          Refresh
+        </Button>
+      </PageHeader>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        {[
-          { label: "Total Assets", value: report.assets.length, color: "border-l-blue-500" },
-          { label: "Active", value: statusCounts.Active, color: "border-l-green-500" },
-          { label: "Under Repair", value: statusCounts["Under Repair"], color: "border-l-yellow-500" },
-          { label: "Spare", value: statusCounts.Spare, color: "border-l-cyan-500" },
-          { label: "Scrapped", value: statusCounts.Scrapped, color: "border-l-gray-400" },
-          { label: "Total Value", value: `₹${report.totalValue.toLocaleString()}`, color: "border-l-red-500" },
-        ].map((card) => (
-          <Card key={card.label} className={`border-0 shadow-sm border-l-4 ${card.color}`}>
-            <CardContent className="p-3">
-              <p className="text-xs text-muted-foreground">{card.label}</p>
-              <p className="text-lg font-bold">{card.value}</p>
-            </CardContent>
-          </Card>
+        {statCards.map((card) => (
+          <StatCard
+            key={card.label}
+            label={card.label}
+            value={card.value}
+            color={card.color}
+            borderColor={card.borderColor}
+          />
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <Card className="border-0 shadow-sm">
-            <CardContent className="p-4">
-              <Tabs value={activeTab} onValueChange={handleTabChange}>
-                <TabsList className="mb-4">
-                  <TabsTrigger value="assets" className="gap-1">
-                    <Package className="h-4 w-4" />
-                    Assets
-                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
-                      {filteredAssets.length}
-                    </Badge>
-                  </TabsTrigger>
-                  <TabsTrigger value="movements" className="gap-1">
-                    <ArrowUpDown className="h-4 w-4" />
-                    Movements
-                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
-                      {filteredMovements.length}
-                    </Badge>
-                  </TabsTrigger>
-                  <TabsTrigger value="maintenance" className="gap-1">
-                    <Wrench className="h-4 w-4" />
-                    Maintenance
-                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
-                      {filteredMaintenance.length}
-                    </Badge>
-                  </TabsTrigger>
-                </TabsList>
+      <FilterCard>
+        <Input
+          placeholder="Search..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="h-9 w-[170px]"
+        />
+        <select
+          className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="">All Status</option>
+          {assetStatuses.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+        <select
+          className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+        >
+          <option value="">All Categories</option>
+          {report.categories.map((c) => (
+            <option key={c.id} value={c.id}>{c.category_name}</option>
+          ))}
+        </select>
+        <select
+          className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          value={locationFilter}
+          onChange={(e) => setLocationFilter(e.target.value)}
+        >
+          <option value="">All Locations</option>
+          {report.locations.map((l) => (
+            <option key={l.id} value={l.id}>{l.location_name}</option>
+          ))}
+        </select>
+      </FilterCard>
 
-                <TabsContent value="assets" className="mt-0 space-y-3">
-                  <div className="flex gap-2 flex-wrap print:hidden">
-                    <Input
-                      placeholder="Search..."
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      className="h-9 w-[170px]"
-                    />
-                    <select
-                      className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                    >
-                      <option value="">All Status</option>
-                      {assetStatuses.map((s) => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
-                    <select
-                      className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                      value={categoryFilter}
-                      onChange={(e) => setCategoryFilter(e.target.value)}
-                    >
-                      <option value="">All Categories</option>
-                      {report.categories.map((c) => (
-                        <option key={c.id} value={c.id}>{c.category_name}</option>
-                      ))}
-                    </select>
-                    <select
-                      className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                      value={locationFilter}
-                      onChange={(e) => setLocationFilter(e.target.value)}
-                    >
-                      <option value="">All Locations</option>
-                      {report.locations.map((l) => (
-                        <option key={l.id} value={l.id}>{l.location_name}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Code</TableHead>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Category</TableHead>
-                          <TableHead>Location</TableHead>
-                          <TableHead>Department</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="text-right">Cost</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredAssets.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                              No assets found
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          filteredAssets.map((a) => (
-                            <TableRow key={a.id}>
-                              <TableCell className="font-medium">{a.asset_code}</TableCell>
-                              <TableCell>{a.asset_name}</TableCell>
-                              <TableCell>{report.categories.find((c) => c.id === a.category_id)?.category_name || "-"}</TableCell>
-                              <TableCell>{report.locations.find((l) => l.id === a.current_location_id)?.location_name || "-"}</TableCell>
-                              <TableCell>{report.departments.find((d) => d.id === a.department_id)?.department_name || "-"}</TableCell>
-                              <TableCell>
-                                <Badge className={getStatusBadgeClasses(a.status)}>{a.status}</Badge>
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {a.purchase_cost != null ? `₹${Number(a.purchase_cost).toLocaleString()}` : "-"}
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="movements" className="mt-0 space-y-3">
-                  <div className="flex gap-2 flex-wrap print:hidden">
-                    <Input
-                      placeholder="Search..."
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      className="h-9 w-[170px]"
-                    />
-                  </div>
-
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Asset</TableHead>
-                          <TableHead>From</TableHead>
-                          <TableHead>To</TableHead>
-                          <TableHead>Reason</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredMovements.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                              No movement records
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          filteredMovements.map((m) => (
-                            <TableRow key={m.id}>
-                              <TableCell>{m.movement_date || "-"}</TableCell>
-                              <TableCell>{report.assets.find((a) => a.id === m.asset_id)?.asset_code || m.asset_id}</TableCell>
-                              <TableCell>{report.locations.find((l) => l.id === m.from_location_id)?.location_name || "-"}</TableCell>
-                              <TableCell>{report.locations.find((l) => l.id === m.to_location_id)?.location_name || "-"}</TableCell>
-                              <TableCell>{m.reason || m.remarks || "-"}</TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="maintenance" className="mt-0 space-y-3">
-                  <div className="flex gap-2 flex-wrap print:hidden">
-                    <Input
-                      placeholder="Search..."
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      className="h-9 w-[170px]"
-                    />
-                    <select
-                      className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                    >
-                      <option value="">All Status</option>
-                      <option value="Scheduled">Scheduled</option>
-                      <option value="In Progress">In Progress</option>
-                      <option value="Completed">Completed</option>
-                      <option value="Cancelled">Cancelled</option>
-                    </select>
-                  </div>
-
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Type</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="text-right">Cost</TableHead>
-                          <TableHead>Remarks</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredMaintenance.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                              No maintenance records
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          filteredMaintenance.map((m) => (
-                            <TableRow key={m.id}>
-                              <TableCell>{m.maintenance_type}</TableCell>
-                              <TableCell>
-                                <Badge className={getStatusBadgeClasses(m.status)}>{m.status}</Badge>
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {m.cost != null ? `₹${Number(m.cost).toLocaleString()}` : "-"}
-                              </TableCell>
-                              <TableCell>{m.remarks || "-"}</TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
+      <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100">
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
+            <TabsList className="mb-0">
+              <TabsTrigger value="assets" className="gap-1">
+                <Package className="h-4 w-4" />
+                Assets
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                  {filteredAssets.length}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="movements" className="gap-1">
+                <ArrowUpDown className="h-4 w-4" />
+                Movements
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                  {filteredMovements.length}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="maintenance" className="gap-1">
+                <Wrench className="h-4 w-4" />
+                Maintenance
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                  {filteredMaintenance.length}
+                </Badge>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
-        <div className="space-y-6">
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold">Status Breakdown</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Count</TableHead>
+        <div className="overflow-auto max-h-[500px]">
+          {activeTab === "assets" && (
+            <Table>
+              <TableHeader className="sticky top-0 bg-white z-10">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Code</TableHead>
+                  <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Name</TableHead>
+                  <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Category</TableHead>
+                  <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Location</TableHead>
+                  <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Department</TableHead>
+                  <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Status</TableHead>
+                  <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 text-right">Cost</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredAssets.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="py-16 text-center">
+                      <div className="flex flex-col items-center gap-3 text-slate-400">
+                        <div className="rounded-full bg-slate-100 p-3">
+                          <Package className="h-8 w-8" />
+                        </div>
+                        <p className="text-sm font-medium text-slate-500">No assets found</p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredAssets.map((a) => (
+                    <TableRow key={a.id} className="hover:bg-slate-50/50">
+                      <TableCell className="font-medium">{a.asset_code}</TableCell>
+                      <TableCell>{a.asset_name}</TableCell>
+                      <TableCell>{report.categories.find((c) => c.id === a.category_id)?.category_name || "-"}</TableCell>
+                      <TableCell>{report.locations.find((l) => l.id === a.current_location_id)?.location_name || "-"}</TableCell>
+                      <TableCell>{report.departments.find((d) => d.id === a.department_id)?.department_name || "-"}</TableCell>
+                      <TableCell>
+                        <Badge className={getStatusBadgeClasses(a.status)}>{a.status}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {a.purchase_cost != null ? `\u20B9${Number(a.purchase_cost).toLocaleString()}` : "-"}
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {Object.entries(report.statusBreakdown).map(([status, count]) => (
-                      <TableRow key={status}>
-                        <TableCell>
-                          <Badge className={getStatusBadgeClasses(status)}>{status}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right">{count}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          )}
 
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold">Operational Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="divide-y">
-                {[
-                  { label: "Total Movements", value: report.movements.length },
-                  { label: "Maintenance Records", value: report.maintenance.length },
-                  { label: "Categories", value: report.categories.length },
-                  { label: "Locations", value: report.locations.length },
-                  { label: "Departments", value: report.departments.length },
-                  { label: "Vendors", value: report.vendors.length },
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center justify-between px-4 py-2.5">
-                    <span className="text-sm text-muted-foreground">{item.label}</span>
-                    <span className="text-sm font-semibold">{item.value}</span>
-                  </div>
+          {activeTab === "movements" && (
+            <Table>
+              <TableHeader className="sticky top-0 bg-white z-10">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Date</TableHead>
+                  <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Asset</TableHead>
+                  <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">From</TableHead>
+                  <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">To</TableHead>
+                  <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Reason</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredMovements.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="py-16 text-center">
+                      <div className="flex flex-col items-center gap-3 text-slate-400">
+                        <div className="rounded-full bg-slate-100 p-3">
+                          <ArrowUpDown className="h-8 w-8" />
+                        </div>
+                        <p className="text-sm font-medium text-slate-500">No movement records</p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredMovements.map((m) => (
+                    <TableRow key={m.id} className="hover:bg-slate-50/50">
+                      <TableCell>{m.movement_date || "-"}</TableCell>
+                      <TableCell>{report.assets.find((a) => a.id === m.asset_id)?.asset_code || m.asset_id}</TableCell>
+                      <TableCell>{report.locations.find((l) => l.id === m.from_location_id)?.location_name || "-"}</TableCell>
+                      <TableCell>{report.locations.find((l) => l.id === m.to_location_id)?.location_name || "-"}</TableCell>
+                      <TableCell>{m.reason || m.remarks || "-"}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          )}
+
+          {activeTab === "maintenance" && (
+            <Table>
+              <TableHeader className="sticky top-0 bg-white z-10">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Type</TableHead>
+                  <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Status</TableHead>
+                  <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 text-right">Cost</TableHead>
+                  <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Remarks</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredMaintenance.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="py-16 text-center">
+                      <div className="flex flex-col items-center gap-3 text-slate-400">
+                        <div className="rounded-full bg-slate-100 p-3">
+                          <Wrench className="h-8 w-8" />
+                        </div>
+                        <p className="text-sm font-medium text-slate-500">No maintenance records</p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredMaintenance.map((m) => (
+                    <TableRow key={m.id} className="hover:bg-slate-50/50">
+                      <TableCell>{m.maintenance_type}</TableCell>
+                      <TableCell>
+                        <Badge className={getStatusBadgeClasses(m.status)}>{m.status}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {m.cost != null ? `\u20B9${Number(m.cost).toLocaleString()}` : "-"}
+                      </TableCell>
+                      <TableCell>{m.remarks || "-"}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-slate-100">
+            <h3 className="text-sm font-semibold text-slate-800">Status Breakdown</h3>
+          </div>
+          <div className="overflow-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-b border-slate-100 hover:bg-transparent">
+                  <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Status</TableHead>
+                  <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 text-right">Count</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {Object.entries(report.statusBreakdown).map(([status, count]) => (
+                  <TableRow key={status} className="hover:bg-slate-50/50">
+                    <TableCell>
+                      <Badge className={getStatusBadgeClasses(status)}>{status}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right">{count}</TableCell>
+                  </TableRow>
                 ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-slate-100">
+            <h3 className="text-sm font-semibold text-slate-800">Operational Summary</h3>
+          </div>
+          <div className="divide-y divide-slate-100">
+            {operationalItems.map((item) => (
+              <div key={item.label} className="flex items-center justify-between px-5 py-2.5 hover:bg-slate-50/50">
+                <span className="text-sm text-slate-500">{item.label}</span>
+                <span className="text-sm font-semibold text-slate-900">{item.value}</span>
               </div>
-            </CardContent>
-          </Card>
+            ))}
+          </div>
         </div>
       </div>
     </div>
