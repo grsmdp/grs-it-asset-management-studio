@@ -10,7 +10,6 @@ import {
   Trash2,
   ShieldAlert,
   RefreshCw,
-  Calendar,
   Activity,
   Server,
   Clock,
@@ -395,7 +394,7 @@ function Dashboard({ setCurrentPage }) {
           </div>
           {assetStatusData.length > 0 ? (
             <div className="space-y-4">
-              {assetStatusData.map((item, i) => (
+              {assetStatusData.map((item) => (
                 <div key={item.label}>
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-2">

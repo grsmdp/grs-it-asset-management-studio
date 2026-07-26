@@ -7,6 +7,16 @@ import InstallPrompt from "@/components/InstallPrompt";
 function AppLayout({ currentPage, setCurrentPage, children }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(true);
+
+  useEffect(() => {
+    function handleResize() {
+      setIsDesktop(window.innerWidth >= 1024);
+    }
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     if (mobileOpen) {
@@ -17,37 +27,36 @@ function AppLayout({ currentPage, setCurrentPage, children }) {
     return () => { document.body.style.overflow = ""; };
   }, [mobileOpen]);
 
-  const sidebarWidth = collapsed ? 72 : 260;
-
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="flex h-screen overflow-hidden bg-slate-50">
-        <Sidebar
+      <Sidebar
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage}
+        collapsed={isDesktop ? collapsed : true}
+        onToggleCollapse={isDesktop ? () => setCollapsed((v) => !v) : undefined}
+        mobileOpen={mobileOpen}
+        onCloseMobile={() => setMobileOpen(false)}
+      />
+
+      <div
+        className="flex flex-col h-screen bg-slate-50 overflow-hidden transition-all duration-300 ease-in-out"
+        style={
+          isDesktop
+            ? { marginLeft: collapsed ? 72 : 260 }
+            : { marginLeft: 0 }
+        }
+      >
+        <TopHeader
           currentPage={currentPage}
-          setCurrentPage={setCurrentPage}
-          collapsed={collapsed}
-          onToggleCollapse={() => setCollapsed((v) => !v)}
-          mobileOpen={mobileOpen}
-          onCloseMobile={() => setMobileOpen(false)}
+          onMenuClick={() => setMobileOpen(true)}
         />
 
-        <div
-          className="flex flex-1 flex-col overflow-hidden transition-[margin] duration-300 ease-in-out"
-          style={{ marginLeft: sidebarWidth }}
-        >
-          <TopHeader
-            currentPage={currentPage}
-            onMenuClick={() => setMobileOpen(true)}
-            sidebarWidth={sidebarWidth}
-          />
-
-          <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 lg:p-6">
-            {children}
-          </main>
-        </div>
-
-        <InstallPrompt />
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 lg:p-6">
+          {children}
+        </main>
       </div>
+
+      <InstallPrompt />
     </TooltipProvider>
   );
 }
