@@ -18,10 +18,7 @@ import {
   Headset,
   FolderOpen,
   ChevronRight,
-  Wifi,
-  Database,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   getDashboardStats,
   getRecentAssets,
@@ -30,13 +27,8 @@ import {
   getDepartments,
 } from "../services/assetService";
 import { getTicketStats } from "../services/helpdeskService";
-
-const STATUS_COLORS = {
-  Active: { bar: "bg-emerald-500", text: "text-emerald-600", bg: "bg-emerald-50" },
-  "Under Repair": { bar: "bg-amber-500", text: "text-amber-600", bg: "bg-amber-50" },
-  Spare: { bar: "bg-violet-500", text: "text-violet-600", bg: "bg-violet-50" },
-  Scrapped: { bar: "bg-slate-400", text: "text-slate-500", bg: "bg-slate-50" },
-};
+import PageHeader from "@/components/layout/PageHeader";
+import StatCard from "@/components/layout/StatCard";
 
 function Dashboard({ setCurrentPage }) {
   const [stats, setStats] = useState(null);
@@ -168,30 +160,10 @@ function Dashboard({ setCurrentPage }) {
   }
 
   const quickActions = [
-    {
-      label: "Add Asset",
-      icon: Plus,
-      page: "addAsset",
-      color: "bg-blue-50 text-blue-600 hover:bg-blue-100",
-    },
-    {
-      label: "Transfer",
-      icon: ArrowLeftRight,
-      page: "movement",
-      color: "bg-cyan-50 text-cyan-600 hover:bg-cyan-100",
-    },
-    {
-      label: "Repair",
-      icon: Wrench,
-      page: "maintenance",
-      color: "bg-amber-50 text-amber-600 hover:bg-amber-100",
-    },
-    {
-      label: "Reports",
-      icon: BarChart3,
-      page: "reports",
-      color: "bg-emerald-50 text-emerald-600 hover:bg-emerald-100",
-    },
+    { label: "Add Asset", icon: Plus, page: "addAsset" },
+    { label: "Transfer", icon: ArrowLeftRight, page: "movement" },
+    { label: "Repair", icon: Wrench, page: "maintenance" },
+    { label: "Reports", icon: BarChart3, page: "reports" },
   ];
 
   const statCards = [
@@ -199,43 +171,43 @@ function Dashboard({ setCurrentPage }) {
       label: "Total Assets",
       value: stats?.totalAssets ?? "--",
       icon: Monitor,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
+      color: "#066fd1",
+      borderColor: "#066fd1",
     },
     {
-      label: "Active Assets",
+      label: "Active",
       value: stats?.activeAssets ?? "--",
       icon: CheckCircle2,
-      color: "text-emerald-600",
-      bg: "bg-emerald-50",
+      color: "#20c997",
+      borderColor: "#20c997",
     },
     {
       label: "Under Repair",
       value: stats?.repairAssets ?? "--",
       icon: Wrench,
-      color: "text-amber-600",
-      bg: "bg-amber-50",
+      color: "#f59f00",
+      borderColor: "#f59f00",
     },
     {
-      label: "Spare Assets",
+      label: "Spare",
       value: stats?.spareAssets ?? "--",
       icon: FolderOpen,
-      color: "text-violet-600",
-      bg: "bg-violet-50",
+      color: "#6f42c1",
+      borderColor: "#6f42c1",
     },
     {
       label: "Scrapped",
       value: stats?.scrappedAssets ?? "--",
       icon: Trash2,
-      color: "text-slate-500",
-      bg: "bg-slate-100",
+      color: "#64748b",
+      borderColor: "#64748b",
     },
     {
       label: "Warranty Expiring",
       value: stats?.warrantyExpiring ?? "--",
       icon: ShieldAlert,
-      color: "text-red-600",
-      bg: "bg-red-50",
+      color: "#dc3545",
+      borderColor: "#dc3545",
     },
   ];
 
@@ -244,13 +216,6 @@ function Dashboard({ setCurrentPage }) {
     "Under Repair": "bg-amber-100 text-amber-700",
     Spare: "bg-violet-100 text-violet-700",
     Scrapped: "bg-slate-100 text-slate-600",
-  };
-
-  const ticketPriorityColor = {
-    Critical: "bg-red-100 text-red-700",
-    High: "bg-orange-100 text-orange-700",
-    Medium: "bg-amber-100 text-amber-700",
-    Low: "bg-sky-100 text-sky-700",
   };
 
   const healthItems = [
@@ -279,99 +244,79 @@ function Dashboard({ setCurrentPage }) {
   return (
     <div className="space-y-6">
       {error && (
-        <div className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
           <AlertTriangle className="h-4 w-4 shrink-0" />
           <span className="flex-1">{error}</span>
           <button
             onClick={() => setError(null)}
-            className="ml-2 text-amber-600 hover:text-amber-800"
+            className="ml-2 text-red-600 hover:text-red-400"
           >
             Dismiss
           </button>
         </div>
       )}
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            {greeting}, IT Administrator
-          </h1>
-          <div className="mt-1 flex items-center gap-2 text-sm text-slate-500">
-            <Calendar className="h-4 w-4" />
-            <span>{dateStr}</span>
-          </div>
-          <p className="mt-1 text-sm text-slate-400">
-            Overview of your IT asset inventory
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {quickActions.map((action) => {
-            const Icon = action.icon;
-            return (
-              <button
-                key={action.label}
-                onClick={() => setCurrentPage(action.page)}
-                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${action.color}`}
-              >
-                <Icon className="h-4 w-4" />
-                {action.label}
-              </button>
-            );
-          })}
-          <button
-            onClick={loadDashboard}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Refresh
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-        {statCards.map((card) => {
-          const Icon = card.icon;
+      <PageHeader
+        pretitle="HOME"
+        title={`${greeting}, IT Administrator`}
+        subtitle={
+          <span className="inline-flex items-center gap-2">
+            <Calendar className="h-3.5 w-3.5" />
+            {dateStr}
+          </span>
+        }
+        accent="#066fd1"
+      >
+        {quickActions.map((action) => {
+          const Icon = action.icon;
           return (
-            <Card key={card.label} className="border-0 shadow-sm">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${card.bg}`}
-                  >
-                    <Icon className={`h-5 w-5 ${card.color}`} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-slate-500 truncate">
-                      {card.label}
-                    </p>
-                    <p className="text-xl font-bold text-slate-900">
-                      {card.value}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <button
+              key={action.label}
+              onClick={() => setCurrentPage(action.page)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {action.label}
+            </button>
           );
         })}
+        <button
+          onClick={loadDashboard}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+          Refresh
+        </button>
+      </PageHeader>
+
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        {statCards.map((card) => (
+          <StatCard
+            key={card.label}
+            icon={card.icon}
+            label={card.label}
+            value={card.value}
+            color={card.color}
+            borderColor={card.borderColor}
+          />
+        ))}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-base flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 text-blue-500" />
-              Asset Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex items-center gap-2 border-b border-slate-100 px-5 py-4">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50">
+              <BarChart3 className="h-4 w-4 text-blue-600" />
+            </div>
+            <h3 className="text-sm font-semibold text-slate-900">Asset Status</h3>
+          </div>
+          <div className="p-5">
             {assetStatusData.length > 0 ? (
               <div className="space-y-4">
                 {assetStatusData.map((item) => (
                   <div key={item.label}>
                     <div className="mb-1.5 flex items-center justify-between text-sm">
-                      <span className="font-medium text-slate-700">
-                        {item.label}
-                      </span>
+                      <span className="font-medium text-slate-700">{item.label}</span>
                       <span className={item.textColor}>
                         {item.count}{" "}
                         <span className="text-slate-400">({item.pct}%)</span>
@@ -387,21 +332,19 @@ function Dashboard({ setCurrentPage }) {
                 ))}
               </div>
             ) : (
-              <p className="py-8 text-center text-sm text-slate-400">
-                No asset data available
-              </p>
+              <p className="py-8 text-center text-sm text-slate-400">No asset data available</p>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-base flex items-center gap-2">
-              <FolderOpen className="h-4 w-4 text-violet-500" />
-              Department Distribution
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex items-center gap-2 border-b border-slate-100 px-5 py-4">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-50">
+              <FolderOpen className="h-4 w-4 text-violet-600" />
+            </div>
+            <h3 className="text-sm font-semibold text-slate-900">Department Distribution</h3>
+          </div>
+          <div className="p-5">
             {deptDistribution.length > 0 ? (
               <div className="space-y-4">
                 {deptDistribution.map((dept) => {
@@ -410,7 +353,7 @@ function Dashboard({ setCurrentPage }) {
                   return (
                     <div key={dept.name}>
                       <div className="mb-1.5 flex items-center justify-between text-sm">
-                        <span className="font-medium text-slate-700 truncate max-w-[60%]">
+                        <span className="max-w-[60%] truncate font-medium text-slate-700">
                           {dept.name}
                         </span>
                         <span className="text-slate-500">{dept.count}</span>
@@ -430,37 +373,37 @@ function Dashboard({ setCurrentPage }) {
                 No department data available
               </p>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base flex items-center gap-2">
-                <ArrowRightLeft className="h-4 w-4 text-cyan-500" />
-                Recent Asset Movements
-              </CardTitle>
-              <button
-                onClick={() => setCurrentPage("movement")}
-                className="text-xs font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1"
-              >
-                View All
-                <ChevronRight className="h-3 w-3" />
-              </button>
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+            <div className="flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50">
+                <ArrowRightLeft className="h-4 w-4 text-blue-600" />
+              </div>
+              <h3 className="text-sm font-semibold text-slate-900">Recent Asset Movements</h3>
             </div>
-          </CardHeader>
-          <CardContent>
+            <button
+              onClick={() => setCurrentPage("movement")}
+              className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-500"
+            >
+              View All
+              <ChevronRight className="h-3 w-3" />
+            </button>
+          </div>
+          <div className="p-5">
             {recentMovements.length > 0 ? (
               <div className="space-y-3">
                 {recentMovements.map((m) => (
                   <div
                     key={m.id}
-                    className="flex items-center gap-3 rounded-lg border border-slate-100 p-3"
+                    className="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50/50 p-3 transition-colors hover:bg-slate-50"
                   >
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyan-50">
-                      <ArrowRightLeft className="h-4 w-4 text-cyan-600" />
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50">
+                      <ArrowRightLeft className="h-4 w-4 text-blue-600" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-slate-700">
@@ -478,30 +421,28 @@ function Dashboard({ setCurrentPage }) {
                 ))}
               </div>
             ) : (
-              <p className="py-8 text-center text-sm text-slate-400">
-                No recent movements
-              </p>
+              <p className="py-8 text-center text-sm text-slate-400">No recent movements</p>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Headset className="h-4 w-4 text-orange-500" />
-                Helpdesk Summary
-              </CardTitle>
-              <button
-                onClick={() => setCurrentPage("helpdesk")}
-                className="text-xs font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1"
-              >
-                Open Helpdesk
-                <ChevronRight className="h-3 w-3" />
-              </button>
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+            <div className="flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-50">
+                <Headset className="h-4 w-4 text-red-600" />
+              </div>
+              <h3 className="text-sm font-semibold text-slate-900">Helpdesk Summary</h3>
             </div>
-          </CardHeader>
-          <CardContent>
+            <button
+              onClick={() => setCurrentPage("helpdesk")}
+              className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-500"
+            >
+              Open Helpdesk
+              <ChevronRight className="h-3 w-3" />
+            </button>
+          </div>
+          <div className="p-5">
             {ticketStats ? (
               <div className="grid grid-cols-2 gap-3">
                 {[
@@ -533,38 +474,33 @@ function Dashboard({ setCurrentPage }) {
                   {
                     label: "Closed (Month)",
                     value: ticketStats.closedThisMonth,
-                    color: "bg-slate-100 text-slate-600",
+                    color: "bg-slate-50 text-slate-600",
                   },
                 ].map((item) => (
-                  <div
-                    key={item.label}
-                    className={`rounded-xl p-3 ${item.color}`}
-                  >
+                  <div key={item.label} className={`rounded-xl p-3 ${item.color}`}>
                     <p className="text-2xl font-bold">{item.value ?? 0}</p>
                     <p className="text-xs font-medium opacity-80">{item.label}</p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="py-8 text-center text-sm text-slate-400">
-                Ticket data unavailable
-              </p>
+              <p className="py-8 text-center text-sm text-slate-400">Ticket data unavailable</p>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Clock className="h-4 w-4 text-amber-500" />
-              Maintenance Overview
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex items-center gap-2 border-b border-slate-100 px-5 py-4">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50">
+              <Clock className="h-4 w-4 text-amber-600" />
+            </div>
+            <h3 className="text-sm font-semibold text-slate-900">Maintenance Overview</h3>
+          </div>
+          <div className="p-5">
             <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-xl border border-slate-100 p-4">
+              <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
                 <div className="flex items-center gap-2 text-sm text-slate-500">
                   <Wrench className="h-4 w-4" />
                   Total Records
@@ -573,7 +509,7 @@ function Dashboard({ setCurrentPage }) {
                   {stats?.maintenanceCount ?? "--"}
                 </p>
               </div>
-              <div className="rounded-xl border border-slate-100 p-4">
+              <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
                 <div className="flex items-center gap-2 text-sm text-slate-500">
                   <ArrowRightLeft className="h-4 w-4" />
                   Total Movements
@@ -583,43 +519,44 @@ function Dashboard({ setCurrentPage }) {
                 </p>
               </div>
             </div>
-            <div className="mt-4 rounded-xl border border-slate-100 p-4">
-              <p className="text-sm font-medium text-slate-700">Warranty Alerts</p>
-              <p className="mt-1 text-sm text-slate-500">
+            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="h-4 w-4 text-amber-600" />
+                <p className="text-sm font-medium text-slate-700">Warranty Alerts</p>
+              </div>
+              <p className="mt-1 pl-6 text-sm text-slate-500">
                 {stats?.warrantyExpiring ?? 0} asset
-                {(stats?.warrantyExpiring ?? 0) !== 1 ? "s" : ""} with warranty
-                expiring within the next 30 days.
+                {(stats?.warrantyExpiring ?? 0) !== 1 ? "s" : ""} with warranty expiring within
+                the next 30 days.
               </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex items-center gap-2 border-b border-slate-100 px-5 py-4">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100">
               <Server className="h-4 w-4 text-slate-500" />
-              System Health
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </div>
+            <h3 className="text-sm font-semibold text-slate-900">System Health</h3>
+          </div>
+          <div className="p-5">
             <div className="space-y-3">
               {healthItems.map((item) => (
                 <div
                   key={item.label}
-                  className="flex items-center justify-between rounded-lg border border-slate-100 p-3"
+                  className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50/50 p-3 transition-colors hover:bg-slate-50"
                 >
                   <div className="flex items-center gap-3">
                     {item.ok ? (
-                      <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
+                      <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
                     ) : (
-                      <span className="flex h-2.5 w-2.5 rounded-full bg-red-400" />
+                      <span className="flex h-2.5 w-2.5 rounded-full bg-red-500" />
                     )}
-                    <span className="text-sm font-medium text-slate-700">
-                      {item.label}
-                    </span>
+                    <span className="text-sm font-medium text-slate-700">{item.label}</span>
                   </div>
                   <span
-                    className={`text-xs font-medium ${item.ok ? "text-emerald-600" : "text-red-500"}`}
+                    className={`text-xs font-medium ${item.ok ? "text-emerald-600" : "text-red-600"}`}
                   >
                     {item.detail}
                   </span>
@@ -628,52 +565,51 @@ function Dashboard({ setCurrentPage }) {
             </div>
             {loadTimestamp && (
               <p className="mt-4 text-center text-xs text-slate-400">
-                Last refreshed:{" "}
-                {loadTimestamp.toLocaleTimeString()}
+                Last refreshed: {loadTimestamp.toLocaleTimeString()}
               </p>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
-      <Card className="border-0 shadow-sm">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Activity className="h-4 w-4 text-blue-500" />
-              Recently Added Assets
-            </CardTitle>
-            <button
-              onClick={() => setCurrentPage("assets")}
-              className="text-xs font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1"
-            >
-              View All
-              <ChevronRight className="h-3 w-3" />
-            </button>
+      <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50">
+              <Activity className="h-4 w-4 text-blue-600" />
+            </div>
+            <h3 className="text-sm font-semibold text-slate-900">Recently Added Assets</h3>
           </div>
-        </CardHeader>
-        <CardContent>
+          <button
+            onClick={() => setCurrentPage("assets")}
+            className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-500"
+          >
+            View All
+            <ChevronRight className="h-3 w-3" />
+          </button>
+        </div>
+        <div className="p-5">
           {recentAssets.length > 0 ? (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto rounded-lg border border-slate-100">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-slate-100">
-                    <th className="pb-2 text-left font-medium text-slate-500">
+                  <tr className="border-b border-slate-200 bg-slate-50">
+                    <th className="sticky top-0 bg-slate-50 px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                       Asset Code
                     </th>
-                    <th className="pb-2 text-left font-medium text-slate-500">
+                    <th className="sticky top-0 bg-slate-50 px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                       Name
                     </th>
-                    <th className="hidden pb-2 text-left font-medium text-slate-500 sm:table-cell">
+                    <th className="sticky top-0 hidden bg-slate-50 px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 sm:table-cell">
                       Category
                     </th>
-                    <th className="hidden pb-2 text-left font-medium text-slate-500 md:table-cell">
+                    <th className="sticky top-0 hidden bg-slate-50 px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 md:table-cell">
                       Location
                     </th>
-                    <th className="hidden pb-2 text-left font-medium text-slate-500 lg:table-cell">
+                    <th className="sticky top-0 hidden bg-slate-50 px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 lg:table-cell">
                       Department
                     </th>
-                    <th className="pb-2 text-left font-medium text-slate-500">
+                    <th className="sticky top-0 bg-slate-50 px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                       Status
                     </th>
                   </tr>
@@ -682,24 +618,20 @@ function Dashboard({ setCurrentPage }) {
                   {recentAssets.map((asset) => (
                     <tr
                       key={asset.id}
-                      className="border-b border-slate-50 last:border-0"
+                      className="border-b border-slate-50 transition-colors hover:bg-slate-50/50 last:border-0"
                     >
-                      <td className="py-2.5 font-semibold text-slate-700">
-                        {asset.asset_code}
-                      </td>
-                      <td className="py-2.5 text-slate-600">
-                        {asset.asset_name}
-                      </td>
-                      <td className="hidden py-2.5 text-slate-500 sm:table-cell">
+                      <td className="px-4 py-3 font-semibold text-slate-700">{asset.asset_code}</td>
+                      <td className="px-4 py-3 text-slate-600">{asset.asset_name}</td>
+                      <td className="hidden px-4 py-3 text-slate-500 sm:table-cell">
                         {asset.asset_categories?.category_name || "-"}
                       </td>
-                      <td className="hidden py-2.5 text-slate-500 md:table-cell">
+                      <td className="hidden px-4 py-3 text-slate-500 md:table-cell">
                         {asset.current_location?.location_name || "-"}
                       </td>
-                      <td className="hidden py-2.5 text-slate-500 lg:table-cell">
+                      <td className="hidden px-4 py-3 text-slate-500 lg:table-cell">
                         {asset.departments?.department_name || "-"}
                       </td>
-                      <td className="py-2.5">
+                      <td className="px-4 py-3">
                         <span
                           className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColorMap[asset.status] || "bg-slate-100 text-slate-600"}`}
                         >
@@ -716,8 +648,8 @@ function Dashboard({ setCurrentPage }) {
               No assets found. Add your first asset to get started.
             </p>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

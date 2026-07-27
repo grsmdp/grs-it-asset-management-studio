@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import PageHeader from "@/components/layout/PageHeader";
+import FormCard from "@/components/layout/FormCard";
 import { Save, ArrowLeft } from "lucide-react";
 
 const emptyForm = {
@@ -134,107 +135,117 @@ function AssetForm({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">{isEdit ? "Edit Asset" : "Add New Asset"}</h2>
-          <p className="text-sm text-muted-foreground">
-            {isEdit
-              ? "Update asset details and assignment information"
-              : "Register a new IT asset in the system"}
-          </p>
-        </div>
-      </div>
+    <div className="space-y-5">
+      <PageHeader
+        pretitle="INVENTORY"
+        title={isEdit ? "Edit Asset" : "Add New Asset"}
+        subtitle={
+          isEdit
+            ? "Update asset details and assignment information"
+            : "Register a new IT asset in the system"
+        }
+        accent="#20c997"
+      />
 
-      <Card className="border-0 shadow-sm">
-        <CardContent className="space-y-6 pt-6">
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Asset Information</h3>
+      <FormCard
+        title="Asset Information"
+        subtitle="Basic details, purchase info, and assignment"
+      >
+        <div className="space-y-8">
+          <div className="space-y-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-100 pb-2">
+              Asset Details
+            </h3>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Asset Code</Label>
+            <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-slate-500">Asset Code</Label>
                 <Input
                   type="text"
                   value={formData.assetCode}
                   readOnly
+                  className="bg-slate-50"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>
-                  Asset Name <span className="text-destructive">*</span>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-slate-500">
+                  Asset Name <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   type="text"
                   name="assetName"
                   value={formData.assetName}
                   onChange={handleChange}
+                  placeholder="Enter asset name"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>
-                  Category <span className="text-destructive">*</span>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-slate-500">
+                  Category <span className="text-red-500">*</span>
                 </Label>
-                  <Select
-                    value={formData.category ? String(formData.category) : ""}
-                    onValueChange={(v) => handleSelectChange("category", v)}
-                    disabled={isEdit}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((c) => (
-                        <SelectItem key={c.id} value={String(c.id)}>
-                          {c.category_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <Select
+                  value={formData.category ? String(formData.category) : ""}
+                  onValueChange={(v) => handleSelectChange("category", v)}
+                  disabled={isEdit}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((c) => (
+                      <SelectItem key={c.id} value={String(c.id)}>
+                        {c.category_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label>Brand</Label>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-slate-500">Brand</Label>
                 <Input
                   type="text"
                   name="brand"
                   value={formData.brand}
                   onChange={handleChange}
+                  placeholder="e.g. Dell, HP, Lenovo"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>Model</Label>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-slate-500">Model</Label>
                 <Input
                   type="text"
                   name="model"
                   value={formData.model}
                   onChange={handleChange}
+                  placeholder="e.g. Latitude 5520"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>Serial Number</Label>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-slate-500">Serial Number</Label>
                 <Input
                   type="text"
                   name="serialNumber"
                   value={formData.serialNumber}
                   onChange={handleChange}
+                  placeholder="Enter serial number"
                 />
               </div>
             </div>
           </div>
 
-          <hr className="border-border" />
+          <div className="space-y-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-100 pb-2">
+              Purchase Details
+            </h3>
 
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Purchase Details</h3>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Vendor</Label>
+            <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-slate-500">Vendor</Label>
                 <Select
                   value={formData.vendor ? String(formData.vendor) : ""}
                   onValueChange={(v) => handleSelectChange("vendor", v)}
@@ -252,8 +263,8 @@ function AssetForm({
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label>Purchase Date</Label>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-slate-500">Purchase Date</Label>
                 <Input
                   type="date"
                   name="purchaseDate"
@@ -262,18 +273,19 @@ function AssetForm({
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>Purchase Cost</Label>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-slate-500">Purchase Cost</Label>
                 <Input
                   type="number"
                   name="purchaseCost"
                   value={formData.purchaseCost}
                   onChange={handleChange}
+                  placeholder="0.00"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>Warranty Expiry</Label>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-slate-500">Warranty Expiry</Label>
                 <Input
                   type="date"
                   name="warrantyExpiry"
@@ -284,14 +296,14 @@ function AssetForm({
             </div>
           </div>
 
-          <hr className="border-border" />
+          <div className="space-y-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-100 pb-2">
+              Assignment
+            </h3>
 
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Assignment</h3>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Department</Label>
+            <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-slate-500">Department</Label>
                 <Select
                   value={formData.department ? String(formData.department) : ""}
                   onValueChange={(v) => handleSelectChange("department", v)}
@@ -309,9 +321,9 @@ function AssetForm({
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label>
-                  Location <span className="text-destructive">*</span>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-slate-500">
+                  Location <span className="text-red-500">*</span>
                 </Label>
                 <Select
                   value={formData.location ? String(formData.location) : ""}
@@ -330,8 +342,8 @@ function AssetForm({
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label>Status</Label>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-slate-500">Status</Label>
                 <Select
                   value={formData.status}
                   onValueChange={(v) => handleSelectChange("status", v)}
@@ -350,20 +362,30 @@ function AssetForm({
             </div>
           </div>
 
-          <hr className="border-border" />
+          <div className="space-y-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-100 pb-2">
+              Additional Notes
+            </h3>
 
-          <div className="space-y-2">
-            <Label>Remarks</Label>
-            <Textarea
-              rows={2}
-              name="remarks"
-              value={formData.remarks}
-              onChange={handleChange}
-            />
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-slate-500">Remarks</Label>
+              <Textarea
+                rows={3}
+                name="remarks"
+                value={formData.remarks}
+                onChange={handleChange}
+                placeholder="Any additional notes about this asset..."
+              />
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <Button size="sm" onClick={handleSave} disabled={saving}>
+          <div className="flex flex-wrap gap-3 pt-3 border-t border-slate-100">
+            <Button
+              size="sm"
+              onClick={handleSave}
+              disabled={saving}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
               <Save className="mr-1 h-4 w-4" />
               {saving ? "Saving..." : isEdit ? "Update Asset" : "Save Asset"}
             </Button>
@@ -374,7 +396,7 @@ function AssetForm({
 
             {setCurrentPage && (
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={() => setCurrentPage("assets")}
               >
@@ -383,8 +405,8 @@ function AssetForm({
               </Button>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </FormCard>
     </div>
   );
 }

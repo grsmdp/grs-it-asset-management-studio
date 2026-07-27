@@ -1,53 +1,89 @@
-import { useState } from "react"
-import { Menu } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet"
-import { TooltipProvider } from "@/components/ui/tooltip"
-import { Sidebar } from "./Sidebar"
-import { Header } from "./Header"
-import { PageContainer } from "./PageContainer"
+import { useState, useEffect } from "react";
+import { Info } from "lucide-react";
+import Sidebar from "./Sidebar";
+import TopHeader from "./TopHeader";
+import InstallPrompt from "@/components/InstallPrompt";
 
-function AppLayout({ currentPage, onNavigate, children }) {
-  const [mobileOpen, setMobileOpen] = useState(false)
+function AppLayout({ currentPage, setCurrentPage, children }) {
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [showUpdateBanner, setShowUpdateBanner] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
 
-  function handleNavigate(page) {
-    onNavigate(page)
-    setMobileOpen(false)
-  }
+  useEffect(() => {
+    const handleResize = () => {
+      const desktop = window.innerWidth >= 1024;
+      setIsDesktop(desktop);
+
+      if (desktop) {
+        setMobileOpen(false);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        setShowUpdateBanner(true);
+      });
+    }
+  }, []);
+
+  const sidebarWidth = collapsed ? 72 : 260;
 
   return (
-    <TooltipProvider>
-      <div className="flex h-screen overflow-hidden bg-background">
-        <aside className="hidden lg:flex lg:w-60 lg:flex-col lg:border-r">
-          <Sidebar currentPage={currentPage} onNavigate={handleNavigate} />
-        </aside>
-
-        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="fixed top-3 left-3 z-40 lg:hidden h-9 w-9"
+    <div className="flex h-screen overflow-hidden bg-[#f8fafc]">
+      {showUpdateBanner && (
+        <div className="fixed top-0 left-0 right-0 z-[9997] border-b border-primary/20 bg-primary/5 py-2 text-center lg:left-[260px]">
+          <div className="flex items-center justify-center gap-2">
+            <Info className="h-4 w-4 text-primary" />
+            <span className="text-sm text-foreground">
+              A new version is available.
+            </span>
+            <button
+              className="rounded-lg bg-primary px-3 py-1 text-xs font-medium text-white hover:bg-primary/90 transition-colors"
+              onClick={() => window.location.reload()}
             >
-              <Menu className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-60 p-0">
-            <Sidebar currentPage={currentPage} onNavigate={handleNavigate} />
-          </SheetContent>
-        </Sheet>
-
-        <div className="flex flex-1 flex-col overflow-hidden">
-          <Header currentPage={currentPage} onNavigate={handleNavigate} />
-          <PageContainer>{children}</PageContainer>
+              Update
+            </button>
+          </div>
         </div>
+      )}
+
+      <InstallPrompt />
+
+      <Sidebar
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage}
+        collapsed={collapsed}
+        onToggleCollapse={() => setCollapsed(!collapsed)}
+        mobileOpen={mobileOpen}
+        onCloseMobile={() => setMobileOpen(false)}
+      />
+
+      <div
+        className="flex flex-1 flex-col overflow-hidden transition-all duration-200"
+        style={{
+          marginLeft: isDesktop ? sidebarWidth : 0,
+        }}
+      >
+        <TopHeader
+          currentPage={currentPage}
+          onMenuClick={() => setMobileOpen(true)}
+        />
+
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 lg:p-5">
+          {children}
+        </main>
       </div>
-    </TooltipProvider>
-  )
+    </div>
+  );
 }
 
-export { AppLayout }
+export default AppLayout;

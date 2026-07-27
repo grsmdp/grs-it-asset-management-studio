@@ -6,28 +6,18 @@ import {
   updateAsset,
   updateMaintenance,
 } from "../services/assetService";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
-import { RefreshCw, Pencil } from "lucide-react";
+import { RefreshCw, Pencil, Wrench, Clock, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import PageHeader from "@/components/layout/PageHeader";
+import FilterCard from "@/components/layout/FilterCard";
+import FormCard from "@/components/layout/FormCard";
+import TableCard from "@/components/layout/TableCard";
+import StatCard from "@/components/layout/StatCard";
 
-const statusVariantMap = {
-  Scheduled: { variant: "default", className: "" },
-  "In Progress": { variant: "outline", className: "border-amber-500 text-amber-700 bg-amber-50" },
-  Completed: { variant: "default", className: "bg-emerald-600 text-white hover:bg-emerald-600/80" },
-  Cancelled: { variant: "secondary", className: "" },
+const statusStyles = {
+  Scheduled: "bg-blue-50 text-blue-700 border border-blue-200",
+  "In Progress": "bg-amber-50 text-amber-700 border border-amber-200",
+  Completed: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+  Cancelled: "bg-slate-100 text-slate-600 border border-slate-200",
 };
 
 function Maintenance() {
@@ -38,6 +28,7 @@ function Maintenance() {
   const [editingId, setEditingId] = useState(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [formOpen, setFormOpen] = useState(true);
   const [form, setForm] = useState({
     asset_id: "",
     maintenance_type: "Repair",
@@ -97,6 +88,7 @@ function Maintenance() {
       cost: record.cost ?? "",
       remarks: record.remarks || "",
     });
+    setFormOpen(true);
   }
 
   async function handleSubmit(e) {
@@ -176,258 +168,246 @@ function Maintenance() {
     return true;
   });
 
+  const statusCounts = useMemo(() => {
+    const counts = { Scheduled: 0, "In Progress": 0, Completed: 0, Cancelled: 0 };
+    records.forEach((r) => {
+      if (counts[r.status] !== undefined) counts[r.status]++;
+    });
+    return counts;
+  }, [records]);
+
+  const columns = [
+    { label: "Asset" },
+    { label: "Type" },
+    { label: "Status" },
+    { label: "Cost" },
+    { label: "Remarks" },
+    { label: "Actions", className: "text-right" },
+  ];
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">Maintenance</h2>
-        <p className="text-sm text-muted-foreground">
-          Track repairs, service requests, and maintenance status
-        </p>
-      </div>
+      <PageHeader
+        pretitle="OPERATIONS"
+        title="Maintenance"
+        subtitle="Track repairs and service requests"
+        accent="#f59f00"
+      />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1">
-          <Card className="border-0 shadow-sm">
-            <CardContent className="pt-6">
-              <h6 className="text-sm font-semibold mb-4">
-                {editingId ? "Edit Maintenance Record" : "New Maintenance Record"}
-              </h6>
+      <FilterCard>
+        <select
+          className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-colors"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="">All Status</option>
+          <option value="Scheduled">Scheduled</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Completed">Completed</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
+        <input
+          type="text"
+          placeholder="Search maintenance..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="h-9 w-64 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-colors"
+        />
+        <button
+          onClick={loadData}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+          Refresh
+        </button>
+      </FilterCard>
 
-              <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-3">
-                <div className="space-y-2">
-                  <Label className="text-sm">Asset *</Label>
-                  <select
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring"
-                    value={form.asset_id}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, asset_id: e.target.value }))
-                    }
-                  >
-                    <option value="">Select Asset</option>
-                    {assets.map((asset) => (
-                      <option key={asset.id} value={asset.id}>
-                        {asset.asset_code} - {asset.asset_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+      <FormCard
+        title={editingId ? "Edit Maintenance Record" : "New Maintenance Record"}
+        subtitle={editingId ? "Update the selected maintenance entry" : "Create a new repair or service entry"}
+        open={formOpen}
+        onToggle={() => setFormOpen(!formOpen)}
+      >
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-slate-600">Asset *</label>
+            <select
+              className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-colors"
+              value={form.asset_id}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, asset_id: e.target.value }))
+              }
+            >
+              <option value="">Select Asset</option>
+              {assets.map((asset) => (
+                <option key={asset.id} value={asset.id}>
+                  {asset.asset_code} - {asset.asset_name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-                <div className="space-y-2">
-                  <Label className="text-sm">Maintenance Type</Label>
-                  <select
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring"
-                    value={form.maintenance_type}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        maintenance_type: e.target.value,
-                      }))
-                    }
-                  >
-                    <option value="Repair">Repair</option>
-                    <option value="Preventive">Preventive</option>
-                    <option value="Upgrade">Upgrade</option>
-                    <option value="Inspection">Inspection</option>
-                  </select>
-                </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-slate-600">Maintenance Type</label>
+            <select
+              className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-colors"
+              value={form.maintenance_type}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  maintenance_type: e.target.value,
+                }))
+              }
+            >
+              <option value="Repair">Repair</option>
+              <option value="Preventive">Preventive</option>
+              <option value="Upgrade">Upgrade</option>
+              <option value="Inspection">Inspection</option>
+            </select>
+          </div>
 
-                <div className="space-y-2">
-                  <Label className="text-sm">Status</Label>
-                  <select
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring"
-                    value={form.status}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, status: e.target.value }))
-                    }
-                  >
-                    <option value="Scheduled">Scheduled</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Cancelled">Cancelled</option>
-                  </select>
-                </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-slate-600">Status</label>
+            <select
+              className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-colors"
+              value={form.status}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, status: e.target.value }))
+              }
+            >
+              <option value="Scheduled">Scheduled</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </div>
 
-                <div className="space-y-2">
-                  <Label className="text-sm">Cost</Label>
-                  <Input
-                    type="number"
-                    value={form.cost}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, cost: e.target.value }))
-                    }
-                  />
-                </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-slate-600">Cost</label>
+            <input
+              type="number"
+              value={form.cost}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, cost: e.target.value }))
+              }
+              placeholder="0.00"
+              className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-colors"
+            />
+          </div>
 
-                <div className="space-y-2">
-                  <Label className="text-sm">Remarks</Label>
-                  <Textarea
-                    rows={2}
-                    value={form.remarks}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, remarks: e.target.value }))
-                    }
-                  />
-                </div>
+          <div className="md:col-span-2 lg:col-span-4 space-y-1.5">
+            <label className="text-xs font-medium text-slate-600">Remarks</label>
+            <textarea
+              rows={2}
+              value={form.remarks}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, remarks: e.target.value }))
+              }
+              placeholder="Additional notes"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-colors resize-none"
+            />
+          </div>
 
-                <div className="flex gap-2">
-                  <Button
-                    type="submit"
-                    size="sm"
-                    className="flex-1"
-                    disabled={saving}
-                  >
-                    {saving ? "Saving..." : editingId ? "Update" : "Create Record"}
-                  </Button>
-                  {editingId && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={resetForm}
+          <div className="md:col-span-2 lg:col-span-4 flex justify-end gap-2 pt-1">
+            {editingId && (
+              <button
+                type="button"
+                onClick={resetForm}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+            )}
+            <button
+              type="submit"
+              disabled={saving}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+            >
+              {saving ? "Saving..." : editingId ? "Update" : "Create Record"}
+            </button>
+          </div>
+        </form>
+      </FormCard>
+
+      <TableCard
+        title="Maintenance History"
+        count={filtered.length}
+        columns={columns}
+        data={filtered}
+        loading={loading}
+        emptyMessage="No maintenance records found"
+        emptyIcon={Wrench}
+        renderRow={(record) => (
+          <tr key={record.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors text-sm">
+            <td className="px-5 py-3 text-slate-700 font-medium">
+              {assetMap[record.asset_id] || record.asset_id}
+            </td>
+            <td className="px-5 py-3 text-slate-600">{record.maintenance_type}</td>
+            <td className="px-5 py-3">
+              <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${statusStyles[record.status] || statusStyles.Scheduled}`}>
+                {record.status}
+              </span>
+            </td>
+            <td className="px-5 py-3 text-slate-600">
+              {record.cost != null
+                ? `\u20B9${Number(record.cost).toLocaleString()}`
+                : "-"}
+            </td>
+            <td className="px-5 py-3 text-slate-500">{record.remarks || "-"}</td>
+            <td className="px-5 py-3">
+              <div className="flex items-center justify-end gap-1">
+                {record.status !== "Completed" &&
+                  record.status !== "Cancelled" && (
+                    <select
+                      className="h-7 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-xs text-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-colors"
+                      value={record.status}
+                      onChange={(e) =>
+                        handleStatusChange(record, e.target.value)
+                      }
                     >
-                      Cancel
-                    </Button>
+                      <option value="Scheduled">Scheduled</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
                   )}
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="lg:col-span-2">
-          <Card className="border-0 shadow-sm">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-                <h6 className="text-sm font-semibold">
-                  Maintenance History ({filtered.length})
-                </h6>
-                <div className="flex items-center gap-2">
-                  <select
-                    className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring"
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                  >
-                    <option value="">All Status</option>
-                    <option value="Scheduled">Scheduled</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Cancelled">Cancelled</option>
-                  </select>
-                  <Input
-                    placeholder="Search..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="h-9 w-36"
-                  />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9 shrink-0"
-                    onClick={loadData}
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                  </Button>
-                </div>
+                <button
+                  onClick={() => handleEdit(record)}
+                  className="inline-flex items-center justify-center h-7 w-7 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
               </div>
+            </td>
+          </tr>
+        )}
+      />
 
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-sm">Asset</TableHead>
-                      <TableHead className="text-sm">Type</TableHead>
-                      <TableHead className="text-sm">Status</TableHead>
-                      <TableHead className="text-sm">Cost</TableHead>
-                      <TableHead className="text-sm">Remarks</TableHead>
-                      <TableHead className="text-sm">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {loading ? (
-                      Array.from({ length: 4 }).map((_, i) => (
-                        <TableRow key={i}>
-                          <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                          <TableCell><Skeleton className="h-5 w-20 rounded-full" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-28" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                        </TableRow>
-                      ))
-                    ) : filtered.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground text-sm">
-                          No maintenance records found
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filtered.map((record) => {
-                        const badgeInfo = statusVariantMap[record.status] || statusVariantMap.Scheduled;
-                        return (
-                          <TableRow key={record.id} className="text-sm">
-                            <TableCell>
-                              {assetMap[record.asset_id] || record.asset_id}
-                            </TableCell>
-                            <TableCell>{record.maintenance_type}</TableCell>
-                            <TableCell>
-                              <Badge variant={badgeInfo.variant} className={badgeInfo.className}>
-                                {record.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {record.cost != null
-                                ? `₹${Number(record.cost).toLocaleString()}`
-                                : "-"}
-                            </TableCell>
-                            <TableCell>{record.remarks || "-"}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-1">
-                                {record.status !== "Completed" &&
-                                  record.status !== "Cancelled" && (
-                                    <select
-                                      className="flex h-8 rounded-md border border-input bg-transparent px-2 py-1 text-xs shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring"
-                                      value={record.status}
-                                      onChange={(e) =>
-                                        handleStatusChange(
-                                          record,
-                                          e.target.value
-                                        )
-                                      }
-                                    >
-                                      <option value="Scheduled">
-                                        Scheduled
-                                      </option>
-                                      <option value="In Progress">
-                                        In Progress
-                                      </option>
-                                      <option value="Completed">
-                                        Completed
-                                      </option>
-                                      <option value="Cancelled">
-                                        Cancelled
-                                      </option>
-                                    </select>
-                                  )}
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                  onClick={() => handleEdit(record)}
-                                >
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          icon={Clock}
+          label="Scheduled"
+          value={statusCounts.Scheduled}
+          color="#3b82f6"
+        />
+        <StatCard
+          icon={AlertTriangle}
+          label="In Progress"
+          value={statusCounts["In Progress"]}
+          color="#f59e0b"
+        />
+        <StatCard
+          icon={CheckCircle}
+          label="Completed"
+          value={statusCounts.Completed}
+          color="#10b981"
+        />
+        <StatCard
+          icon={XCircle}
+          label="Cancelled"
+          value={statusCounts.Cancelled}
+          color="#6b7280"
+        />
       </div>
     </div>
   );

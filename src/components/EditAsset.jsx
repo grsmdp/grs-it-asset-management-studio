@@ -46,11 +46,9 @@ function EditAsset({ assetId, setCurrentPage }) {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="flex flex-col items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="mt-3 text-sm text-muted-foreground">Loading asset details...</p>
-        </div>
+      <div className="flex flex-col items-center justify-center py-32">
+        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+        <p className="mt-3 text-sm text-slate-500">Loading asset details...</p>
       </div>
     );
   }
@@ -58,7 +56,7 @@ function EditAsset({ assetId, setCurrentPage }) {
   if (error) {
     return (
       <div className="space-y-4">
-        <div className="flex items-start gap-3 rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{error}</span>
         </div>

@@ -6,7 +6,8 @@ import {
   addTicketHistory,
 } from "../../services/helpdeskService";
 import { getAssets, loadMasterData } from "../../services/assetService";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import PageHeader from "@/components/layout/PageHeader";
+import FormCard from "@/components/layout/FormCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -140,26 +141,21 @@ function NewTicket({ setCurrentPage, setViewingTicketId }) {
   if (loading) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-8 w-64" />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <Skeleton className="h-96 rounded-lg" />
-          </div>
-          <Skeleton className="h-64 rounded-lg" />
-        </div>
+        <Skeleton className="h-16 w-64" />
+        <Skeleton className="h-20 rounded-xl" />
+        <Skeleton className="h-96 rounded-xl" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">New Helpdesk Ticket</h2>
-          <p className="text-sm text-muted-foreground">
-            Log a new IT support request
-          </p>
-        </div>
+      <PageHeader
+        pretitle="HELPDESK"
+        title="New Helpdesk Ticket"
+        subtitle="Log a new IT support request"
+        accent="#6f42c1"
+      >
         <Button
           variant="outline"
           size="sm"
@@ -168,191 +164,169 @@ function NewTicket({ setCurrentPage, setViewingTicketId }) {
           <ArrowLeft className="mr-1 h-4 w-4" />
           All Tickets
         </Button>
+      </PageHeader>
+
+      <div className="rounded-xl border border-slate-200 bg-white shadow-sm px-5 py-4">
+        <h6 className="text-sm font-semibold text-slate-700 mb-2">Guidelines</h6>
+        <ul className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-slate-500">
+          <li>Provide a clear, concise problem title</li>
+          <li>Include error messages and screenshots if possible</li>
+          <li>Select the correct asset if it relates to a specific device</li>
+          <li>Set priority based on business impact</li>
+          <li>Critical issues will be escalated immediately</li>
+        </ul>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <Card className="border-0 shadow-sm">
-            <CardContent className="pt-6">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Problem Title *</Label>
-                  <Input
-                    value={form.problem_title}
-                    onChange={(e) => handleChange("problem_title", e.target.value)}
-                    placeholder="Brief description of the issue"
-                  />
-                </div>
+      <FormCard title="Ticket Details" subtitle="Fill in the form to create a new support ticket">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="space-y-2 md:col-span-2 lg:col-span-3">
+              <Label>Problem Title *</Label>
+              <Input
+                value={form.problem_title}
+                onChange={(e) => handleChange("problem_title", e.target.value)}
+                placeholder="Brief description of the issue"
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2 lg:col-span-3">
+              <Label>Problem Description</Label>
+              <Textarea
+                rows={4}
+                value={form.problem_description}
+                onChange={(e) => handleChange("problem_description", e.target.value)}
+                placeholder="Detailed description including steps to reproduce, error messages, etc."
+              />
+            </div>
+          </div>
 
-                <div className="space-y-2">
-                  <Label>Problem Description</Label>
-                  <Textarea
-                    rows={4}
-                    value={form.problem_description}
-                    onChange={(e) => handleChange("problem_description", e.target.value)}
-                    placeholder="Detailed description including steps to reproduce, error messages, etc."
-                  />
-                </div>
+          <h6 className="text-sm font-semibold text-slate-700">Requester Information</h6>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Requested By *</Label>
+              <Input
+                value={form.requested_by}
+                onChange={(e) => handleChange("requested_by", e.target.value)}
+                placeholder="Full name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input
+                type="email"
+                value={form.requested_by_email}
+                onChange={(e) => handleChange("requested_by_email", e.target.value)}
+                placeholder="Email address"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Phone</Label>
+              <Input
+                value={form.requested_by_phone}
+                onChange={(e) => handleChange("requested_by_phone", e.target.value)}
+                placeholder="Phone number"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Department</Label>
+              <Select value={form.department_id} onValueChange={(v) => handleChange("department_id", v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Department" />
+                </SelectTrigger>
+                <SelectContent>
+                  {departments.map((d) => (
+                    <SelectItem key={d.id} value={String(d.id)}>{d.department_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Location</Label>
+              <Select value={form.location_id} onValueChange={(v) => handleChange("location_id", v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {locations.map((l) => (
+                    <SelectItem key={l.id} value={String(l.id)}>{l.location_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
-                <div>
-                  <h6 className="text-sm font-semibold">Requester Information</h6>
-                </div>
+          <h6 className="text-sm font-semibold text-slate-700">Issue Details</h6>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Asset (if applicable)</Label>
+              <Select value={form.asset_id} onValueChange={(v) => handleChange("asset_id", v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Asset" />
+                </SelectTrigger>
+                <SelectContent>
+                  {assets.map((a) => (
+                    <SelectItem key={a.id} value={String(a.id)}>{a.asset_code} - {a.asset_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Category</Label>
+              <Select value={form.category_id} onValueChange={(v) => handleChange("category_id", v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((c) => (
+                    <SelectItem key={c.id} value={String(c.id)}>{c.category_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Priority</Label>
+              <Select value={form.priority} onValueChange={(v) => handleChange("priority", v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Low">Low</SelectItem>
+                  <SelectItem value="Medium">Medium</SelectItem>
+                  <SelectItem value="High">High</SelectItem>
+                  <SelectItem value="Critical">Critical</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Assign To</Label>
+              <Input
+                value={form.assigned_to}
+                onChange={(e) => handleChange("assigned_to", e.target.value)}
+                placeholder="Engineer / team name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Assignment Type</Label>
+              <Select value={form.assigned_type} onValueChange={(v) => handleChange("assigned_type", v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Internal">Internal IT Engineer</SelectItem>
+                  <SelectItem value="Vendor">Vendor</SelectItem>
+                  <SelectItem value="Other">Other Team Member</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label>Requested By *</Label>
-                    <Input
-                      value={form.requested_by}
-                      onChange={(e) => handleChange("requested_by", e.target.value)}
-                      placeholder="Full name"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Email</Label>
-                    <Input
-                      type="email"
-                      value={form.requested_by_email}
-                      onChange={(e) => handleChange("requested_by_email", e.target.value)}
-                      placeholder="Email address"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Phone</Label>
-                    <Input
-                      value={form.requested_by_phone}
-                      onChange={(e) => handleChange("requested_by_phone", e.target.value)}
-                      placeholder="Phone number"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Department</Label>
-                    <Select value={form.department_id} onValueChange={(v) => handleChange("department_id", v)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Department" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {departments.map((d) => (
-                          <SelectItem key={d.id} value={String(d.id)}>{d.department_name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Location</Label>
-                    <Select value={form.location_id} onValueChange={(v) => handleChange("location_id", v)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Location" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {locations.map((l) => (
-                          <SelectItem key={l.id} value={String(l.id)}>{l.location_name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div>
-                  <h6 className="text-sm font-semibold">Issue Details</h6>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Asset (if applicable)</Label>
-                    <Select value={form.asset_id} onValueChange={(v) => handleChange("asset_id", v)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Asset" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {assets.map((a) => (
-                          <SelectItem key={a.id} value={String(a.id)}>{a.asset_code} - {a.asset_name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Category</Label>
-                    <Select value={form.category_id} onValueChange={(v) => handleChange("category_id", v)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((c) => (
-                          <SelectItem key={c.id} value={String(c.id)}>{c.category_name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Priority</Label>
-                    <Select value={form.priority} onValueChange={(v) => handleChange("priority", v)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Low">Low</SelectItem>
-                        <SelectItem value="Medium">Medium</SelectItem>
-                        <SelectItem value="High">High</SelectItem>
-                        <SelectItem value="Critical">Critical</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Assign To</Label>
-                    <Input
-                      value={form.assigned_to}
-                      onChange={(e) => handleChange("assigned_to", e.target.value)}
-                      placeholder="Engineer / team name"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Assignment Type</Label>
-                  <Select value={form.assigned_type} onValueChange={(v) => handleChange("assigned_type", v)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Internal">Internal IT Engineer</SelectItem>
-                      <SelectItem value="Vendor">Vendor</SelectItem>
-                      <SelectItem value="Other">Other Team Member</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Button type="submit" disabled={saving}>
-                    {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {saving ? "Creating..." : "Create Ticket"}
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div>
-          <Card className="border-0 shadow-sm">
-            <CardContent className="pt-6">
-              <h6 className="text-sm font-semibold mb-3">Guidelines</h6>
-              <ul className="space-y-2 text-sm">
-                <li>Provide a clear, concise problem title</li>
-                <li>Include error messages and screenshots if possible</li>
-                <li>Select the correct asset if it relates to a specific device</li>
-                <li>Set priority based on business impact</li>
-                <li>Critical issues will be escalated immediately</li>
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+          <div>
+            <Button type="submit" disabled={saving} className="bg-green-600 hover:bg-green-700 text-white">
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {saving ? "Creating..." : "Create Ticket"}
+            </Button>
+          </div>
+        </form>
+      </FormCard>
     </div>
   );
 }
