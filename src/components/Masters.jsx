@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+﻿import { useEffect, useState, useRef } from "react";
 import {
   getCategories,
   createCategory,
@@ -34,7 +34,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Pencil, Trash2, Save, X, RefreshCw, Loader2, FolderOpen } from "lucide-react";
+import {
+  Pencil, Trash2, Save, X, RefreshCw, Loader2, FolderOpen,
+  Plus, Download, Upload, FileSpreadsheet,
+} from "lucide-react";
+import { MASTER_META, generateTemplate, downloadWorkbook, exportToExcel, buildDateString } from "./common/ExcelUtils";
+import ExcelImport from "./common/ExcelImport";
 
 const MASTER_CONFIG = {
   categories: {
@@ -96,11 +101,14 @@ const MASTER_CONFIG = {
 
 function Masters({ masterType }) {
   const config = MASTER_CONFIG[masterType];
+  const meta = MASTER_META[masterType];
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [search, setSearch] = useState("");
+  const [showImport, setShowImport] = useState(false);
+  const formRef = useRef(null);
 
   const initialForm = { [config.nameField]: "", is_active: true };
   config.extraFields.forEach((f) => { initialForm[f.key] = ""; });
@@ -126,6 +134,11 @@ function Masters({ masterType }) {
   function resetForm() {
     setForm({ ...initialForm });
     setEditingId(null);
+  }
+
+  function handleAddNew() {
+    resetForm();
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   async function handleSubmit(e) {
@@ -182,6 +195,21 @@ function Masters({ masterType }) {
     }
   }
 
+  function handleDownloadTemplate() {
+    const wb = generateTemplate(meta);
+    downloadWorkbook(wb, `${meta.fileName}_Template.xlsx`);
+  }
+
+  function handleExport() {
+    const wb = exportToExcel(records, meta);
+    downloadWorkbook(wb, `${meta.fileName}_${buildDateString()}.xlsx`);
+  }
+
+  function handleImportComplete() {
+    setShowImport(false);
+    loadRecords();
+  }
+
   const filtered = records.filter((r) => {
     const name = r[config.nameField] || "";
     return name.toLowerCase().includes(search.toLowerCase());
@@ -220,7 +248,27 @@ function Masters({ masterType }) {
         title={config.title}
         subtitle={config.subtitle}
         accent="#64748b"
-      />
+      >
+        <Button size="sm" onClick={handleAddNew}>
+          <Plus className="mr-1 h-4 w-4" />
+          Add New
+        </Button>
+        <Button variant="outline" size="sm" onClick={handleDownloadTemplate}>
+          <Download className="mr-1 h-4 w-4" />
+          <span className="hidden sm:inline">Download Template</span>
+          <span className="sm:hidden">Template</span>
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => setShowImport(true)}>
+          <Upload className="mr-1 h-4 w-4" />
+          <span className="hidden sm:inline">Import Excel</span>
+          <span className="sm:hidden">Import</span>
+        </Button>
+        <Button variant="outline" size="sm" onClick={handleExport}>
+          <FileSpreadsheet className="mr-1 h-4 w-4" />
+          <span className="hidden sm:inline">Export Excel</span>
+          <span className="sm:hidden">Export</span>
+        </Button>
+      </PageHeader>
 
       <FilterCard>
         <Input
@@ -235,72 +283,72 @@ function Masters({ masterType }) {
         </Button>
       </FilterCard>
 
-      <FormCard
-        title={editingId ? "Edit Record" : "New Record"}
-      >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor={`field-${config.nameField}`}>{config.nameLabel}</Label>
-              <Input
-                id={`field-${config.nameField}`}
-                value={form[config.nameField]}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, [config.nameField]: e.target.value }))
-                }
-                placeholder={`Enter ${config.nameLabel.toLowerCase()}`}
-              />
-            </div>
-
-            {config.extraFields.map((field) => (
-              <div className="space-y-2" key={field.key}>
-                <Label htmlFor={`field-${field.key}`}>{field.label}</Label>
+      <div ref={formRef}>
+        <FormCard title={editingId ? "Edit Record" : "New Record"}>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor={`field-${config.nameField}`}>{config.nameLabel}</Label>
                 <Input
-                  id={`field-${field.key}`}
-                  type={field.type}
-                  value={form[field.key]}
+                  id={`field-${config.nameField}`}
+                  value={form[config.nameField]}
                   onChange={(e) =>
-                    setForm((prev) => ({ ...prev, [field.key]: e.target.value }))
+                    setForm((prev) => ({ ...prev, [config.nameField]: e.target.value }))
                   }
-                  placeholder={field.placeholder}
+                  placeholder={`Enter ${config.nameLabel.toLowerCase()}`}
                 />
               </div>
-            ))}
 
-            <div className="flex items-end">
-              <div className="flex items-center gap-3 rounded-md border border-slate-200 px-3 py-2">
-                <Label htmlFor="field-is_active" className="text-sm cursor-pointer text-slate-700">
-                  Active
-                </Label>
-                <Switch
-                  id="field-is_active"
-                  checked={form.is_active}
-                  onCheckedChange={(checked) =>
-                    setForm((prev) => ({ ...prev, is_active: checked }))
-                  }
-                />
+              {config.extraFields.map((field) => (
+                <div className="space-y-2" key={field.key}>
+                  <Label htmlFor={`field-${field.key}`}>{field.label}</Label>
+                  <Input
+                    id={`field-${field.key}`}
+                    type={field.type}
+                    value={form[field.key]}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, [field.key]: e.target.value }))
+                    }
+                    placeholder={field.placeholder}
+                  />
+                </div>
+              ))}
+
+              <div className="flex items-end">
+                <div className="flex items-center gap-3 rounded-md border border-slate-200 px-3 py-2">
+                  <Label htmlFor="field-is_active" className="text-sm cursor-pointer text-slate-700">
+                    Active
+                  </Label>
+                  <Switch
+                    id="field-is_active"
+                    checked={form.is_active}
+                    onCheckedChange={(checked) =>
+                      setForm((prev) => ({ ...prev, is_active: checked }))
+                    }
+                  />
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="flex gap-2">
-            <Button type="submit" size="sm" disabled={saving}>
-              {saving ? (
-                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-              ) : editingId ? (
-                <Save className="mr-1 h-4 w-4" />
-              ) : null}
-              {saving ? "Saving..." : editingId ? "Update" : "Add"}
-            </Button>
-            {editingId && (
-              <Button type="button" variant="outline" size="sm" onClick={resetForm}>
-                <X className="mr-1 h-4 w-4" />
-                Cancel
+            <div className="flex gap-2">
+              <Button type="submit" size="sm" disabled={saving}>
+                {saving ? (
+                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                ) : editingId ? (
+                  <Save className="mr-1 h-4 w-4" />
+                ) : null}
+                {saving ? "Saving..." : editingId ? "Update" : "Add"}
               </Button>
-            )}
-          </div>
-        </form>
-      </FormCard>
+              {editingId && (
+                <Button type="button" variant="outline" size="sm" onClick={resetForm}>
+                  <X className="mr-1 h-4 w-4" />
+                  Cancel
+                </Button>
+              )}
+            </div>
+          </form>
+        </FormCard>
+      </div>
 
       <TableCard
         title="Records"
@@ -350,6 +398,15 @@ function Masters({ masterType }) {
           </TableRow>
         )}
       />
+
+      {showImport && (
+        <ExcelImport
+          masterType={masterType}
+          existingRecords={records}
+          onImportComplete={handleImportComplete}
+          onClose={() => setShowImport(false)}
+        />
+      )}
     </div>
   );
 }

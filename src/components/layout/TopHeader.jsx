@@ -48,14 +48,12 @@ function TopHeader({ currentPage, onMenuClick }) {
   return (
     <header className="flex h-14 shrink-0 items-center gap-3 border-b border-slate-200/60 bg-white/80 backdrop-blur-md px-4 lg:px-5">
       {/* Mobile menu button */}
-      {onMenuClick && (
-        <button
-          onClick={onMenuClick}
-          className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors lg:hidden"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
-      )}
+      <button
+        onClick={onMenuClick}
+        className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors lg:hidden"
+      >
+        <Menu className="h-5 w-5" />
+      </button>
 
       {/* Breadcrumbs */}
       <div className="hidden md:block">
