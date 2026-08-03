@@ -8,7 +8,25 @@ import { TableRow, TableCell } from "@/components/ui/table";
 import PageHeader from "@/components/layout/PageHeader";
 import FilterCard from "@/components/layout/FilterCard";
 import TableCard from "@/components/layout/TableCard";
-import { Plus, Pencil, Trash2, RefreshCw, Package } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  RefreshCw,
+  Package,
+  Download,
+  Upload,
+  FileSpreadsheet,
+} from "lucide-react";
+import {
+  MASTER_META,
+  generateTemplate,
+  downloadWorkbook,
+  exportToExcel,
+  flattenAssetForExport,
+  buildDateString,
+} from "./common/ExcelUtils";
+import ExcelImport from "./common/ExcelImport";
 
 function statusBadgeVariant(status) {
   switch (status) {
@@ -46,6 +64,9 @@ function Assets({ setCurrentPage, onEditAsset }) {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [showImport, setShowImport] = useState(false);
+
+  const meta = MASTER_META.assets;
 
   useEffect(() => {
     loadAssets();
@@ -85,6 +106,22 @@ function Assets({ setCurrentPage, onEditAsset }) {
       console.error(err);
       alert(err.message);
     }
+  }
+
+  function handleDownloadTemplate() {
+    const wb = generateTemplate(meta);
+    downloadWorkbook(wb, `${meta.fileName}_Template.xlsx`);
+  }
+
+  function handleExport() {
+    const rows = filteredAssets.map((asset) => flattenAssetForExport(asset, masters));
+    const wb = exportToExcel(rows, meta);
+    downloadWorkbook(wb, `${meta.fileName}_${buildDateString()}.xlsx`);
+  }
+
+  function handleImportComplete() {
+    setShowImport(false);
+    loadAssets();
   }
 
   const lookupMaps = useMemo(
@@ -127,6 +164,21 @@ function Assets({ setCurrentPage, onEditAsset }) {
         >
           <Plus className="mr-1 h-4 w-4" />
           Add Asset
+        </Button>
+        <Button variant="outline" size="sm" onClick={handleDownloadTemplate}>
+          <Download className="mr-1 h-4 w-4" />
+          <span className="hidden sm:inline">Download Template</span>
+          <span className="sm:hidden">Template</span>
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => setShowImport(true)}>
+          <Upload className="mr-1 h-4 w-4" />
+          <span className="hidden sm:inline">Import Excel</span>
+          <span className="sm:hidden">Import</span>
+        </Button>
+        <Button variant="outline" size="sm" onClick={handleExport}>
+          <FileSpreadsheet className="mr-1 h-4 w-4" />
+          <span className="hidden sm:inline">Export Excel</span>
+          <span className="sm:hidden">Export</span>
         </Button>
       </PageHeader>
 
@@ -217,6 +269,16 @@ function Assets({ setCurrentPage, onEditAsset }) {
           </TableRow>
         )}
       />
+
+      {showImport && (
+        <ExcelImport
+          masterType="assets"
+          existingRecords={assets}
+          lookups={masters}
+          onImportComplete={handleImportComplete}
+          onClose={() => setShowImport(false)}
+        />
+      )}
     </div>
   );
 }

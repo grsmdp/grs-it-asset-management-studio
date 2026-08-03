@@ -4,6 +4,10 @@ import Sidebar from "./Sidebar";
 import TopHeader from "./TopHeader";
 import InstallPrompt from "@/components/InstallPrompt";
 
+const SIDEBAR_GAP = 16;
+const SIDEBAR_EXPANDED = 248;
+const SIDEBAR_COLLAPSED = 84;
+
 function AppLayout({ currentPage, setCurrentPage, children }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -13,28 +17,25 @@ function AppLayout({ currentPage, setCurrentPage, children }) {
     function handleResize() {
       const desktop = window.innerWidth >= 1024;
       setIsDesktop(desktop);
-      if (desktop) {
-        setMobileOpen(false);
-      }
+      if (desktop) setMobileOpen(false);
     }
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
-    if (mobileOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => {
       document.body.style.overflow = "";
-    }
-    return () => { document.body.style.overflow = ""; };
+    };
   }, [mobileOpen]);
 
-  const sidebarWidth = collapsed ? 72 : 260;
+  const sidebarWidth = collapsed ? SIDEBAR_COLLAPSED : SIDEBAR_EXPANDED;
+  const contentOffset = sidebarWidth + SIDEBAR_GAP * 2;
 
   return (
-    <TooltipProvider delayDuration={300}>
-      <div className="flex h-screen overflow-hidden bg-slate-50">
+    <TooltipProvider delayDuration={250}>
+      <div className="flex h-screen overflow-hidden bg-[#e9eef2]">
         <Sidebar
           currentPage={currentPage}
           setCurrentPage={setCurrentPage}
@@ -42,22 +43,28 @@ function AppLayout({ currentPage, setCurrentPage, children }) {
           onToggleCollapse={() => setCollapsed((v) => !v)}
           mobileOpen={mobileOpen}
           onCloseMobile={() => setMobileOpen(false)}
+          width={sidebarWidth}
         />
 
         <div
           className="flex flex-1 flex-col overflow-hidden transition-all duration-300 ease-in-out"
           style={{
-            marginLeft: isDesktop ? sidebarWidth : 0,
+            marginLeft: isDesktop ? contentOffset : 0,
+            paddingRight: isDesktop ? SIDEBAR_GAP : 0,
+            paddingTop: isDesktop ? SIDEBAR_GAP : 0,
+            paddingBottom: isDesktop ? SIDEBAR_GAP : 0,
           }}
         >
-          <TopHeader
-            currentPage={currentPage}
-            onMenuClick={() => setMobileOpen(true)}
-          />
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-none lg:rounded-[28px] bg-transparent">
+            <TopHeader
+              currentPage={currentPage}
+              onMenuClick={() => setMobileOpen(true)}
+            />
 
-          <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 lg:p-6">
-            {children}
-          </main>
+            <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4 pt-2 lg:px-6 lg:pb-6">
+              {children}
+            </main>
+          </div>
         </div>
 
         <InstallPrompt />

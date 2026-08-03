@@ -15,7 +15,7 @@ import {
   MapPin,
   PanelLeftClose,
   PanelLeft,
-  Shield,
+  Waves,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -26,32 +26,32 @@ import {
 
 const menuSections = [
   {
-    title: "MAIN",
+    title: "Main",
     items: [
-      { id: "dashboard", icon: LayoutDashboard, name: "Dashboard", color: "#066fd1" },
-      { id: "assets", icon: Monitor, name: "Assets", color: "#20c997" },
-      { id: "movement", icon: ArrowLeftRight, name: "Asset Movement", color: "#f76707" },
-      { id: "maintenance", icon: Wrench, name: "Maintenance", color: "#f59f00" },
-      { id: "reports", icon: BarChart3, name: "Reports", color: "#dc3545" },
+      { id: "dashboard", icon: LayoutDashboard, name: "Dashboard", color: "#0f6b6d", light: "#e6f3f3" },
+      { id: "assets", icon: Monitor, name: "Assets", color: "#2563eb", light: "#e8f0fe" },
+      { id: "movement", icon: ArrowLeftRight, name: "Asset Movement", color: "#ea580c", light: "#fff1e8" },
+      { id: "maintenance", icon: Wrench, name: "Maintenance", color: "#d97706", light: "#fff8e8" },
+      { id: "reports", icon: BarChart3, name: "Reports", color: "#dc2626", light: "#fdeceb" },
     ],
   },
   {
-    title: "HELPDESK",
+    title: "Helpdesk",
     items: [
-      { id: "helpdesk", icon: Headset, name: "Dashboard", color: "#6f42c1" },
-      { id: "newTicket", icon: PlusCircle, name: "New Ticket", color: "#6f42c1" },
-      { id: "allTickets", icon: List, name: "All Tickets", color: "#6f42c1" },
-      { id: "myTickets", icon: UserCheck, name: "My Tickets", color: "#6f42c1" },
-      { id: "helpdeskReports", icon: FileBarChart, name: "Reports", color: "#dc3545" },
+      { id: "helpdesk", icon: Headset, name: "Dashboard", color: "#7c3aed", light: "#f3eeff" },
+      { id: "newTicket", icon: PlusCircle, name: "New Ticket", color: "#0891b2", light: "#e7f7fb" },
+      { id: "allTickets", icon: List, name: "All Tickets", color: "#4f46e5", light: "#eef0ff" },
+      { id: "myTickets", icon: UserCheck, name: "My Tickets", color: "#059669", light: "#e8f8f1" },
+      { id: "helpdeskReports", icon: FileBarChart, name: "Reports", color: "#db2777", light: "#fce8f2" },
     ],
   },
   {
-    title: "SETTINGS",
+    title: "Settings",
     items: [
-      { id: "categories", icon: Tags, name: "Categories", color: "#64748b" },
-      { id: "departments", icon: Building2, name: "Departments", color: "#64748b" },
-      { id: "vendors", icon: Truck, name: "Vendors", color: "#64748b" },
-      { id: "locations", icon: MapPin, name: "Locations", color: "#64748b" },
+      { id: "categories", icon: Tags, name: "Categories", color: "#0d9488", light: "#e6f7f5" },
+      { id: "departments", icon: Building2, name: "Departments", color: "#6366f1", light: "#eef0ff" },
+      { id: "vendors", icon: Truck, name: "Vendors", color: "#c2410c", light: "#fff0e8" },
+      { id: "locations", icon: MapPin, name: "Locations", color: "#65a30d", light: "#f2f8e8" },
     ],
   },
 ];
@@ -61,43 +61,52 @@ function NavItem({ item, active, collapsed, onClick }) {
 
   const button = (
     <button
+      type="button"
       onClick={onClick}
       className={cn(
-        "group relative flex w-full items-center gap-3 rounded-lg text-[13px] font-medium transition-all duration-150",
-        collapsed ? "justify-center px-2 py-2.5" : "px-3 py-2",
-        active
-          ? "shadow-sm"
-          : "text-slate-500 hover:text-slate-800 hover:bg-slate-50/80"
+        "group flex w-full items-center rounded-2xl text-[13.5px] font-medium transition-all duration-200",
+        collapsed ? "justify-center px-0 py-2.5" : "gap-3 px-3 py-2.5"
       )}
       style={
         active
           ? {
-              backgroundColor: `${item.color}0A`,
-              color: item.color,
-              boxShadow: `inset 3px 0 0 ${item.color}`,
+              backgroundColor: item.color,
+              color: "#fff",
+              boxShadow: `0 6px 16px ${item.color}33`,
             }
-          : undefined
+          : {
+              backgroundColor: item.light,
+              color: item.color,
+            }
       }
-      title={collapsed ? item.name : undefined}
+      onMouseEnter={(e) => {
+        if (!active) {
+          e.currentTarget.style.backgroundColor = item.color;
+          e.currentTarget.style.color = "#fff";
+          e.currentTarget.style.boxShadow = `0 6px 16px ${item.color}28`;
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!active) {
+          e.currentTarget.style.backgroundColor = item.light;
+          e.currentTarget.style.color = item.color;
+          e.currentTarget.style.boxShadow = "none";
+        }
+      }}
     >
-      <Icon
+      <span
         className={cn(
-          "h-[18px] w-[18px] shrink-0 transition-all duration-150",
-          active ? "" : "group-hover:scale-105"
+          "flex shrink-0 items-center justify-center rounded-xl transition-colors duration-200",
+          collapsed ? "h-9 w-9" : "h-8 w-8"
         )}
-        style={active ? { color: item.color } : undefined}
-        strokeWidth={active ? 2.2 : 1.8}
-      />
-      {!collapsed && (
-        <span className="truncate">{item.name}</span>
-      )}
-      {collapsed && (
-        <span className="absolute left-full ml-2 hidden group-hover:block z-[60]">
-          <span className="whitespace-nowrap rounded-md bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-white shadow-lg">
-            {item.name}
-          </span>
-        </span>
-      )}
+        style={{
+          backgroundColor: active ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.7)",
+          color: active ? "#fff" : item.color,
+        }}
+      >
+        <Icon className="h-[17px] w-[17px]" strokeWidth={active ? 2.2 : 1.9} />
+      </span>
+      {!collapsed && <span className="truncate tracking-[-0.01em]">{item.name}</span>}
     </button>
   );
 
@@ -105,7 +114,7 @@ function NavItem({ item, active, collapsed, onClick }) {
     return (
       <Tooltip>
         <TooltipTrigger asChild>{button}</TooltipTrigger>
-        <TooltipContent side="right" sideOffset={8}>
+        <TooltipContent side="right" sideOffset={14} className="font-medium">
           {item.name}
         </TooltipContent>
       </Tooltip>
@@ -122,16 +131,13 @@ function Sidebar({
   onToggleCollapse,
   mobileOpen,
   onCloseMobile,
+  width = 248,
 }) {
   function isActive(item) {
     return (
       currentPage === item.id ||
       (item.id === "assets" && ["addAsset", "editAsset"].includes(currentPage)) ||
-      (item.id === "allTickets" && currentPage === "ticketDetail") ||
-      (item.id === "helpdesk" &&
-        ["newTicket", "allTickets", "myTickets", "ticketDetail", "helpdeskReports"].includes(
-          currentPage
-        ))
+      (item.id === "allTickets" && currentPage === "ticketDetail")
     );
   }
 
@@ -142,59 +148,60 @@ function Sidebar({
 
   return (
     <>
-      {/* Mobile overlay */}
       <div
         className={cn(
-          "fixed inset-0 z-40 bg-black/30 backdrop-blur-sm transition-opacity duration-300 lg:hidden",
+          "fixed inset-0 z-40 bg-slate-900/35 backdrop-blur-[2px] transition-opacity duration-300 lg:hidden",
           mobileOpen ? "opacity-100" : "pointer-events-none opacity-0"
         )}
         onClick={onCloseMobile}
       />
 
-      {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 bottom-0 z-50 flex flex-col bg-white border-r border-slate-200/80 transition-[width] duration-300 ease-in-out",
-          collapsed ? "w-[72px]" : "w-[260px]",
+          "fixed z-50 flex flex-col bg-white transition-[width,transform] duration-300 ease-in-out",
+          "top-0 bottom-0 left-0 rounded-none",
+          "lg:top-4 lg:bottom-4 lg:left-4 lg:rounded-[28px]",
+          "shadow-[0_8px_40px_rgba(15,40,60,0.08)] ring-1 ring-black/[0.03]",
           mobileOpen
-            ? "translate-x-0 shadow-2xl lg:shadow-md"
+            ? "translate-x-0"
             : "-translate-x-full lg:translate-x-0"
         )}
-        style={{ transitionProperty: "width, transform" }}
+        style={{ width }}
       >
         {/* Brand */}
         <div
           className={cn(
-            "flex h-14 shrink-0 items-center border-b border-slate-100 transition-all duration-300",
+            "flex h-[72px] shrink-0 items-center",
             collapsed ? "justify-center px-2" : "gap-3 px-5"
           )}
         >
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 shadow-sm shadow-blue-500/20">
-            <Shield className="h-4 w-4 text-white" strokeWidth={2.2} />
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Waves className="h-5 w-5" strokeWidth={2.2} />
           </div>
           {!collapsed && (
-            <div className="min-w-0 animate-in fade-in slide-in-from-left-2 duration-200">
-              <h2 className="text-[13px] font-bold text-slate-900 leading-tight tracking-tight">
+            <div className="min-w-0">
+              <h2 className="text-[15px] font-semibold tracking-[-0.02em] text-slate-900 leading-none">
                 GRS IT
               </h2>
-              <span className="text-[10px] font-medium text-slate-400 leading-none">
-                Asset Management
-              </span>
+              <p className="mt-1 text-[11px] font-medium text-slate-400 leading-none">
+                Asset Studio
+              </p>
             </div>
           )}
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-2.5 py-4 space-y-5 sidebar-scroll">
+        <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-5 sidebar-scroll">
           {menuSections.map((section) => (
             <div key={section.title}>
-              {!collapsed && (
-                <div className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400/80">
+              {!collapsed ? (
+                <div className="mb-2 px-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
                   {section.title}
                 </div>
+              ) : (
+                <div className="mx-auto mb-2 h-px w-6 rounded-full bg-slate-100" />
               )}
-              {collapsed && <div className="mx-auto mb-2 h-px w-5 bg-slate-200" />}
-              <div className="space-y-0.5">
+              <div className="space-y-1.5">
                 {section.items.map((item) => (
                   <NavItem
                     key={item.id}
@@ -209,82 +216,25 @@ function Sidebar({
           ))}
         </nav>
 
-        {/* User info (collapsed) */}
-        {collapsed && (
-          <div className="border-t border-slate-100 px-2 py-3 flex justify-center">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="relative cursor-default">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-[10px] font-bold text-blue-600 ring-2 ring-white">
-                    MD
-                  </div>
-                  <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-400" />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="right" sideOffset={8}>
-                <div>
-                  <p className="font-medium">IT Administrator</p>
-                  <p className="text-slate-400">GRS IT Department</p>
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        )}
-
-        {/* User info (expanded) */}
-        {!collapsed && (
-          <div className="border-t border-slate-100 px-3.5 py-3">
-            <div className="flex items-center gap-3">
-              <div className="relative shrink-0">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-[10px] font-bold text-blue-600 ring-2 ring-white">
-                  MD
-                </div>
-                <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-400" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-semibold text-slate-800 truncate leading-tight">
-                  IT Administrator
-                </p>
-                <p className="text-[10px] text-slate-400 leading-tight">
-                  GRS IT Department
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Collapse toggle */}
-        <div
-          className={cn(
-            "border-t border-slate-100 shrink-0",
-            collapsed ? "px-2 py-2" : "px-3 py-2"
-          )}
-        >
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={onToggleCollapse}
-                className={cn(
-                  "flex w-full items-center gap-2 rounded-lg text-xs font-medium text-slate-400 transition-all duration-150 hover:bg-slate-50 hover:text-slate-600",
-                  collapsed ? "justify-center px-2 py-2" : "px-3 py-2"
-                )}
-              >
-                {collapsed ? (
-                  <PanelLeft className="h-4 w-4" />
-                ) : (
-                  <>
-                    <PanelLeftClose className="h-4 w-4" />
-                    <span>Collapse</span>
-                  </>
-                )}
-              </button>
-            </TooltipTrigger>
-            {collapsed && (
-              <TooltipContent side="right" sideOffset={8}>
-                Expand sidebar
-              </TooltipContent>
+        {/* Footer */}
+        <div className="shrink-0 p-3">
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            className={cn(
+              "flex w-full items-center rounded-2xl text-[12px] font-medium text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-700",
+              collapsed ? "justify-center py-3" : "gap-2.5 px-4 py-3"
             )}
-          </Tooltip>
+          >
+            {collapsed ? (
+              <PanelLeft className="h-4 w-4" />
+            ) : (
+              <>
+                <PanelLeftClose className="h-4 w-4" />
+                <span>Collapse</span>
+              </>
+            )}
+          </button>
         </div>
       </aside>
     </>
