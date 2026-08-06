@@ -19,7 +19,9 @@ function ExcelImport({ masterType, existingRecords, onImportComplete, onClose, l
   const fileRef = useRef(null);
   const [step, setStep] = useState("select");
   const [previewRows, setPreviewRows] = useState([]);
-  const [importOption, setImportOption] = useState("insert");
+  const [importOption, setImportOption] = useState(
+    masterType === "assets" ? "upsert" : "insert"
+  );
   const [importing, setImporting] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
   const [importResult, setImportResult] = useState(null);
@@ -52,6 +54,23 @@ function ExcelImport({ masterType, existingRecords, onImportComplete, onClose, l
     }
   }
 
+  async function ensureLocationInLookups(locationName) {
+    const name = String(locationName || "").trim();
+    if (!name) return;
+    const list = lookups?.locations || [];
+    const exists = list.some(
+      (l) => String(l.location_name || "").trim().toLowerCase() === name.toLowerCase()
+    );
+    if (exists) return;
+    const { data, error } = await supabase
+      .from("locations")
+      .insert([{ location_name: name, location_type: "Site", is_active: true }])
+      .select()
+      .single();
+    if (error) throw new Error(`Could not create Location "${name}": ${error.message}`);
+    lookups.locations = [...list, data];
+  }
+
   async function doImport() {
     setImporting(true);
     setImportProgress(0);
@@ -73,6 +92,10 @@ function ExcelImport({ masterType, existingRecords, onImportComplete, onClose, l
       try {
         let payload;
         if (isAssets) {
+          // Auto-create Location from template so Asset Name + Location can be rewritten on re-upload
+          if (item.row?.location) {
+            await ensureLocationInLookups(item.row.location);
+          }
           const built = buildAssetRowPayload(item.row, lookups);
           if (built.errors.length) throw new Error(built.errors.join("; "));
           payload = built.payload;
@@ -231,8 +254,9 @@ function ExcelImport({ masterType, existingRecords, onImportComplete, onClose, l
 
               {isAssets && (
                 <p className="text-[11px] text-slate-400">
-                  Leave Asset Code blank to auto-generate. Category / Location / Department / Vendor
-                  must match existing master names exactly.
+                  Leave Asset Code blank to auto-generate. Category / Sub Category / Location /
+                  Department / Vendor must match existing master names exactly. Sub Category is
+                  optional and must belong to the given Category.
                 </p>
               )}
 

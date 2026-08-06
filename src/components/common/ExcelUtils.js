@@ -83,6 +83,7 @@ export const MASTER_META = {
       { key: "asset_code", label: "Asset Code", required: false },
       { key: "asset_name", label: "Asset Name", required: true },
       { key: "category", label: "Category", required: true },
+      { key: "subcategory", label: "Sub Category", required: false },
       { key: "brand", label: "Brand", required: false },
       { key: "model", label: "Model", required: false },
       { key: "serial_number", label: "Serial Number", required: false },
@@ -99,6 +100,7 @@ export const MASTER_META = {
       asset_code: "DESK-001",
       asset_name: "Dell OptiPlex",
       category: "Desktop",
+      subcategory: "Tower",
       brand: "Dell",
       model: "OptiPlex 7090",
       serial_number: "SN123456",
@@ -179,6 +181,27 @@ export function buildAssetRowPayload(row, lookups = {}) {
   if (String(row.department || "").trim() && department.error) errors.push(department.error);
   if (String(row.vendor || "").trim() && vendor.error) errors.push(vendor.error);
 
+  let subcategory_id = null;
+  const subName = String(row.subcategory || "").trim();
+  if (subName) {
+    if (!category.id) {
+      errors.push("Sub Category requires a valid Category");
+    } else {
+      const match = (lookups.subcategories || []).find(
+        (s) =>
+          String(s.category_id) === String(category.id) &&
+          String(s.subcategory_name || "").trim().toLowerCase() === subName.toLowerCase()
+      );
+      if (!match) {
+        errors.push(
+          `Sub Category "${subName}" not found under Category "${String(row.category).trim()}"`
+        );
+      } else {
+        subcategory_id = match.id;
+      }
+    }
+  }
+
   const statusRaw = String(row.status || "").trim();
   const statusNorm = statusRaw.toLowerCase();
   let status = "Active";
@@ -200,6 +223,7 @@ export function buildAssetRowPayload(row, lookups = {}) {
     asset_code: String(row.asset_code || "").trim() || null,
     asset_name: String(row.asset_name || "").trim(),
     category_id: category.id,
+    subcategory_id,
     brand: String(row.brand || "").trim() || null,
     model: String(row.model || "").trim() || null,
     serial_number: String(row.serial_number || "").trim() || null,
@@ -218,6 +242,9 @@ export function buildAssetRowPayload(row, lookups = {}) {
 
 export function flattenAssetForExport(asset, lookups = {}) {
   const cat = Object.fromEntries((lookups.categories || []).map((c) => [c.id, c.category_name]));
+  const sub = Object.fromEntries(
+    (lookups.subcategories || []).map((s) => [s.id, s.subcategory_name])
+  );
   const dept = Object.fromEntries((lookups.departments || []).map((d) => [d.id, d.department_name]));
   const vend = Object.fromEntries((lookups.vendors || []).map((v) => [v.id, v.vendor_name]));
   const loc = Object.fromEntries((lookups.locations || []).map((l) => [l.id, l.location_name]));
@@ -226,6 +253,7 @@ export function flattenAssetForExport(asset, lookups = {}) {
     asset_code: asset.asset_code || "",
     asset_name: asset.asset_name || "",
     category: cat[asset.category_id] || "",
+    subcategory: sub[asset.subcategory_id] || "",
     brand: asset.brand || "",
     model: asset.model || "",
     serial_number: asset.serial_number || "",
@@ -376,7 +404,11 @@ export function classifyImportRows(parsedRows, meta, existingRecords, lookups = 
 
     if (meta.statusType === "asset" && lookups) {
       const { errors: lookupErrors } = buildAssetRowPayload(row, lookups);
-      errors = [...errors, ...lookupErrors];
+      // Location can be auto-created on import when rewriting Asset Name / Location from template
+      errors = [
+        ...errors,
+        ...lookupErrors.filter((e) => !/^Location ".+" not found$/.test(e)),
+      ];
     }
 
     const existing = matchKey ? existingNames.get(matchKey) : null;

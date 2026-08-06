@@ -10,6 +10,7 @@ import {
   UserCheck,
   FileBarChart,
   Tags,
+  Layers,
   Building2,
   Truck,
   MapPin,
@@ -49,6 +50,7 @@ const menuSections = [
     title: "Settings",
     items: [
       { id: "categories", icon: Tags, name: "Categories", color: "#0d9488", light: "#e6f7f5" },
+      { id: "subcategories", icon: Layers, name: "Sub Categories", color: "#0891b2", light: "#e7f7fb" },
       { id: "departments", icon: Building2, name: "Departments", color: "#6366f1", light: "#eef0ff" },
       { id: "vendors", icon: Truck, name: "Vendors", color: "#c2410c", light: "#fff0e8" },
       { id: "locations", icon: MapPin, name: "Locations", color: "#65a30d", light: "#f2f8e8" },

@@ -61,7 +61,7 @@ function AppLayout({ currentPage, setCurrentPage, children }) {
               onMenuClick={() => setMobileOpen(true)}
             />
 
-            <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4 pt-2 lg:px-6 lg:pb-6">
+            <main className="flex-1 overflow-y-auto overflow-x-auto px-4 pb-8 pt-2 lg:px-6 lg:pb-8">
               {children}
             </main>
           </div>

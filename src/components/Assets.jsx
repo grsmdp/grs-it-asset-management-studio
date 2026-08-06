@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { deleteAsset, getAssets, loadMasterData } from "../services/assetService";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { TableRow, TableCell } from "@/components/ui/table";
 import PageHeader from "@/components/layout/PageHeader";
 import FilterCard from "@/components/layout/FilterCard";
@@ -17,6 +15,7 @@ import {
   Download,
   Upload,
   FileSpreadsheet,
+  X,
 } from "lucide-react";
 import {
   MASTER_META,
@@ -43,27 +42,26 @@ function statusBadgeVariant(status) {
   }
 }
 
-const columns = [
-  { label: "Asset Code" },
-  { label: "Asset Name" },
-  { label: "Category" },
-  { label: "Location" },
-  { label: "Department" },
-  { label: "Status" },
-  { label: "Actions", className: "text-right" },
-];
+const EMPTY_FILTERS = {
+  asset_code: "",
+  asset_name: "",
+  category_id: "",
+  location_id: "",
+  department_id: "",
+  status: "",
+};
 
 function Assets({ setCurrentPage, onEditAsset }) {
   const [assets, setAssets] = useState([]);
   const [masters, setMasters] = useState({
     categories: [],
+    subcategories: [],
     locations: [],
     departments: [],
     vendors: [],
   });
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [showImport, setShowImport] = useState(false);
 
   const meta = MASTER_META.assets;
@@ -124,6 +122,10 @@ function Assets({ setCurrentPage, onEditAsset }) {
     loadAssets();
   }
 
+  function setFilter(key, value) {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  }
+
   const lookupMaps = useMemo(
     () => ({
       categories: Object.fromEntries(
@@ -139,15 +141,132 @@ function Assets({ setCurrentPage, onEditAsset }) {
     [masters]
   );
 
-  const filteredAssets = assets.filter((asset) => {
-    const matchesSearch = `${asset.asset_code || ""} ${asset.asset_name || ""} ${asset.brand || ""}`
-      .toLowerCase()
-      .includes(search.toLowerCase());
+  const categoryOptions = useMemo(
+    () =>
+      [...masters.categories]
+        .sort((a, b) => a.category_name.localeCompare(b.category_name))
+        .map((c) => ({ value: String(c.id), label: c.category_name })),
+    [masters.categories]
+  );
 
-    const matchesStatus = statusFilter ? asset.status === statusFilter : true;
+  const locationOptions = useMemo(
+    () =>
+      [...masters.locations]
+        .sort((a, b) => a.location_name.localeCompare(b.location_name))
+        .map((l) => ({ value: String(l.id), label: l.location_name })),
+    [masters.locations]
+  );
 
-    return matchesSearch && matchesStatus;
-  });
+  const departmentOptions = useMemo(
+    () =>
+      [...masters.departments]
+        .sort((a, b) => a.department_name.localeCompare(b.department_name))
+        .map((d) => ({ value: String(d.id), label: d.department_name })),
+    [masters.departments]
+  );
+
+  const filteredAssets = useMemo(() => {
+    const codeQ = filters.asset_code.trim().toLowerCase();
+    const nameQ = filters.asset_name.trim().toLowerCase();
+
+    return assets.filter((asset) => {
+      if (codeQ && !String(asset.asset_code || "").toLowerCase().includes(codeQ)) {
+        return false;
+      }
+      if (nameQ && !String(asset.asset_name || "").toLowerCase().includes(nameQ)) {
+        return false;
+      }
+      if (filters.category_id && String(asset.category_id) !== filters.category_id) {
+        return false;
+      }
+      const locId = asset.current_location_id || asset.location_id;
+      if (filters.location_id && String(locId || "") !== filters.location_id) {
+        return false;
+      }
+      if (
+        filters.department_id &&
+        String(asset.department_id || "") !== filters.department_id
+      ) {
+        return false;
+      }
+      if (filters.status && asset.status !== filters.status) {
+        return false;
+      }
+      return true;
+    });
+  }, [assets, filters]);
+
+  const hasActiveFilters = Object.values(filters).some((v) => String(v).trim());
+
+  const columns = useMemo(
+    () => [
+      {
+        label: "Asset Code",
+        filter: {
+          type: "text",
+          value: filters.asset_code,
+          onChange: (v) => setFilter("asset_code", v),
+          placeholder: "Filter code...",
+        },
+      },
+      {
+        label: "Asset Name",
+        filter: {
+          type: "text",
+          value: filters.asset_name,
+          onChange: (v) => setFilter("asset_name", v),
+          placeholder: "Filter name...",
+        },
+      },
+      {
+        label: "Category",
+        filter: {
+          type: "select",
+          value: filters.category_id,
+          onChange: (v) => setFilter("category_id", v),
+          placeholder: "All categories",
+          options: categoryOptions,
+        },
+      },
+      {
+        label: "Location",
+        filter: {
+          type: "select",
+          value: filters.location_id,
+          onChange: (v) => setFilter("location_id", v),
+          placeholder: "All locations",
+          options: locationOptions,
+        },
+      },
+      {
+        label: "Department",
+        filter: {
+          type: "select",
+          value: filters.department_id,
+          onChange: (v) => setFilter("department_id", v),
+          placeholder: "All departments",
+          options: departmentOptions,
+        },
+      },
+      {
+        label: "Status",
+        filter: {
+          type: "select",
+          value: filters.status,
+          onChange: (v) => setFilter("status", v),
+          placeholder: "All statuses",
+          options: [
+            { value: "Active", label: "Active" },
+            { value: "Spare", label: "Spare" },
+            { value: "Under Repair", label: "Under Repair" },
+            { value: "Scrapped", label: "Scrapped" },
+          ],
+        },
+      },
+      { label: "Actions", className: "text-right" },
+    ],
+    [filters, categoryOptions, locationOptions, departmentOptions]
+  );
 
   return (
     <div className="space-y-5">
@@ -183,36 +302,24 @@ function Assets({ setCurrentPage, onEditAsset }) {
       </PageHeader>
 
       <FilterCard>
-        <div className="flex-1 min-w-0 sm:max-w-xs">
-          <Input
-            placeholder="Search asset code, name, or brand"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-
-        <div className="w-full sm:w-44">
-          <Select
-            value={statusFilter || "__all__"}
-            onValueChange={(v) => setStatusFilter(v === "__all__" ? "" : v)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="All Statuses" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__all__">All Statuses</SelectItem>
-              <SelectItem value="Active">Active</SelectItem>
-              <SelectItem value="Spare">Spare</SelectItem>
-              <SelectItem value="Under Repair">Under Repair</SelectItem>
-              <SelectItem value="Scrapped">Scrapped</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
         <Button variant="outline" size="sm" onClick={loadAssets}>
           <RefreshCw className="mr-1 h-4 w-4" />
           Refresh
         </Button>
+        {hasActiveFilters && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setFilters(EMPTY_FILTERS)}
+            className="text-slate-500"
+          >
+            <X className="mr-1 h-4 w-4" />
+            Clear column filters
+          </Button>
+        )}
+        <p className="text-xs text-slate-400 sm:ml-auto">
+          Use the filter boxes under each column header
+        </p>
       </FilterCard>
 
       <TableCard

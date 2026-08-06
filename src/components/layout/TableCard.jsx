@@ -9,11 +9,46 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-function TableCard({ title, count, children, columns, data, loading, emptyMessage, emptyIcon: EmptyIcon, renderRow, pagination, className }) {
+function ColumnFilter({ filter }) {
+  if (!filter) return null;
+
+  if (filter.type === "select") {
+    return (
+      <select
+        value={filter.value || ""}
+        onChange={(e) => filter.onChange(e.target.value)}
+        onClick={(e) => e.stopPropagation()}
+        className="mt-1.5 h-7 w-full min-w-[6.5rem] rounded-md border border-slate-200 bg-white px-1.5 text-[11px] font-normal normal-case tracking-normal text-slate-700 shadow-none outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20"
+      >
+        <option value="">{filter.placeholder || "All"}</option>
+        {(filter.options || []).map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    );
+  }
+
   return (
-    <div className={`rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden ${className || ""}`}>
+    <input
+      type="text"
+      value={filter.value || ""}
+      onChange={(e) => filter.onChange(e.target.value)}
+      onClick={(e) => e.stopPropagation()}
+      placeholder={filter.placeholder || "Filter..."}
+      className="mt-1.5 h-7 w-full min-w-[6.5rem] rounded-md border border-slate-200 bg-white px-2 text-[11px] font-normal normal-case tracking-normal text-slate-700 shadow-none outline-none placeholder:text-slate-400 focus:border-primary/40 focus:ring-1 focus:ring-primary/20"
+    />
+  );
+}
+
+function TableCard({ title, count, children, columns, data, loading, emptyMessage, emptyIcon: EmptyIcon, renderRow, pagination, className }) {
+  const hasColumnFilters = columns?.some((col) => col.filter);
+
+  return (
+    <div className={`rounded-xl border border-slate-200 bg-white shadow-sm flex flex-col min-h-0 ${className || ""}`}>
       {title && (
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100">
+        <div className="flex shrink-0 items-center justify-between px-5 py-3.5 border-b border-slate-100">
           <h3 className="text-sm font-semibold text-slate-800">
             {title}
             {count !== undefined && (
@@ -24,19 +59,22 @@ function TableCard({ title, count, children, columns, data, loading, emptyMessag
       )}
 
       {children ? (
-        children
+        <div className="table-scroll-area min-h-0 flex-1">{children}</div>
       ) : (
-        <div className="overflow-auto">
-          <Table>
+        <div className="table-scroll-area">
+          <Table className="min-w-full">
             <TableHeader>
               <TableRow className="border-b border-slate-100 hover:bg-transparent">
                 {columns.map((col, i) => (
                   <TableHead
                     key={i}
-                    className={`text-[11px] font-semibold uppercase tracking-wider text-slate-500 ${col.className || ""}`}
+                    className={`sticky top-0 z-10 bg-white text-[11px] font-semibold uppercase tracking-wider text-slate-500 ${hasColumnFilters ? "align-top h-auto py-2" : ""} ${col.className || ""}`}
                     style={col.width ? { width: col.width } : undefined}
                   >
-                    {col.label}
+                    <div className={col.filter ? "flex flex-col" : undefined}>
+                      <span>{col.label}</span>
+                      <ColumnFilter filter={col.filter} />
+                    </div>
                   </TableHead>
                 ))}
               </TableRow>
@@ -78,7 +116,7 @@ function TableCard({ title, count, children, columns, data, loading, emptyMessag
       )}
 
       {pagination && (
-        <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3">
+        <div className="flex shrink-0 items-center justify-between border-t border-slate-100 px-5 py-3">
           <span className="text-xs text-slate-500">
             Showing {pagination.from} to {pagination.to} of {pagination.total}
           </span>

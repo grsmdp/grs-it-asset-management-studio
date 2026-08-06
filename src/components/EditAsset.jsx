@@ -10,6 +10,7 @@ import { AlertCircle, Loader2, ArrowLeft } from "lucide-react";
 
 function EditAsset({ assetId, setCurrentPage }) {
   const [categories, setCategories] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
   const [locations, setLocations] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [vendors, setVendors] = useState([]);
@@ -32,6 +33,7 @@ function EditAsset({ assetId, setCurrentPage }) {
       ]);
 
       setCategories(masters.categories);
+      setSubcategories(masters.subcategories || []);
       setLocations(masters.locations);
       setDepartments(masters.departments);
       setVendors(masters.vendors);
@@ -78,6 +80,7 @@ function EditAsset({ assetId, setCurrentPage }) {
       assetId={assetId}
       initialData={initialData}
       categories={categories}
+      subcategories={subcategories}
       locations={locations}
       departments={departments}
       vendors={vendors}

@@ -16,12 +16,17 @@ import {
   createLocation,
   updateLocation,
   deleteLocation,
+  getSubcategories,
+  createSubcategory,
+  updateSubcategory,
+  deleteSubcategory,
 } from "../services/assetService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import PageHeader from "@/components/layout/PageHeader";
 import FilterCard from "@/components/layout/FilterCard";
 import FormCard from "@/components/layout/FormCard";
@@ -53,6 +58,25 @@ const MASTER_CONFIG = {
     nameField: "category_name",
     extraFields: [
       { key: "code_prefix", label: "Code Prefix", type: "text", placeholder: "e.g. LAP, DSK" },
+    ],
+  },
+  subcategories: {
+    title: "Sub Category Management",
+    subtitle: "Types under each category (Dome, Bullet, Laser, Inkjet, etc.)",
+    fetchFn: getSubcategories,
+    createFn: createSubcategory,
+    updateFn: updateSubcategory,
+    deleteFn: deleteSubcategory,
+    nameLabel: "Sub Category Name",
+    nameField: "subcategory_name",
+    extraFields: [
+      {
+        key: "category_id",
+        label: "Parent Category",
+        type: "category-select",
+        placeholder: "Select category",
+        required: true,
+      },
     ],
   },
   departments: {
@@ -103,6 +127,7 @@ function Masters({ masterType }) {
   const config = MASTER_CONFIG[masterType];
   const meta = MASTER_META[masterType];
   const [records, setRecords] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -118,14 +143,28 @@ function Masters({ masterType }) {
     loadRecords();
   }, [masterType]);
 
+  function categoryLabel(id) {
+    const cat = categories.find((c) => String(c.id) === String(id));
+    return cat?.category_name || (id != null ? String(id) : "-");
+  }
+
   async function loadRecords() {
     try {
       setLoading(true);
       const data = await config.fetchFn();
       setRecords(data || []);
+      if (masterType === "subcategories") {
+        const cats = await getCategories();
+        setCategories(cats || []);
+      }
     } catch (err) {
       console.error(err);
-      alert(err.message);
+      const msg = String(err.message || "");
+      alert(
+        msg.includes("asset_subcategories") || msg.includes("Could not find the table")
+          ? "Sub Categories table is missing. Run src/sql/asset_subcategories.sql in the Supabase SQL Editor first."
+          : err.message
+      );
     } finally {
       setLoading(false);
     }
@@ -150,9 +189,20 @@ function Masters({ masterType }) {
       return;
     }
 
+    for (const f of config.extraFields) {
+      if (f.required && !String(form[f.key] || "").trim()) {
+        alert(`Please select/enter ${f.label}.`);
+        return;
+      }
+    }
+
     const payload = { [config.nameField]: nameValue, is_active: form.is_active };
     config.extraFields.forEach((f) => {
-      payload[f.key] = form[f.key]?.trim() || null;
+      if (f.type === "category-select") {
+        payload[f.key] = form[f.key] ? Number(form[f.key]) : null;
+      } else {
+        payload[f.key] = form[f.key]?.trim() || null;
+      }
     });
 
     try {
@@ -178,7 +228,7 @@ function Masters({ masterType }) {
     setEditingId(record.id);
     const formData = { [config.nameField]: record[config.nameField] || "", is_active: record.is_active ?? true };
     config.extraFields.forEach((f) => {
-      formData[f.key] = record[f.key] || "";
+      formData[f.key] = record[f.key] != null ? String(record[f.key]) : "";
     });
     setForm(formData);
   }
@@ -212,7 +262,9 @@ function Masters({ masterType }) {
 
   const filtered = records.filter((r) => {
     const name = r[config.nameField] || "";
-    return name.toLowerCase().includes(search.toLowerCase());
+    const extra =
+      masterType === "subcategories" ? ` ${categoryLabel(r.category_id)}` : "";
+    return `${name}${extra}`.toLowerCase().includes(search.toLowerCase());
   });
 
   const columns = [
@@ -253,21 +305,25 @@ function Masters({ masterType }) {
           <Plus className="mr-1 h-4 w-4" />
           Add New
         </Button>
-        <Button variant="outline" size="sm" onClick={handleDownloadTemplate}>
-          <Download className="mr-1 h-4 w-4" />
-          <span className="hidden sm:inline">Download Template</span>
-          <span className="sm:hidden">Template</span>
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => setShowImport(true)}>
-          <Upload className="mr-1 h-4 w-4" />
-          <span className="hidden sm:inline">Import Excel</span>
-          <span className="sm:hidden">Import</span>
-        </Button>
-        <Button variant="outline" size="sm" onClick={handleExport}>
-          <FileSpreadsheet className="mr-1 h-4 w-4" />
-          <span className="hidden sm:inline">Export Excel</span>
-          <span className="sm:hidden">Export</span>
-        </Button>
+        {meta && (
+          <>
+            <Button variant="outline" size="sm" onClick={handleDownloadTemplate}>
+              <Download className="mr-1 h-4 w-4" />
+              <span className="hidden sm:inline">Download Template</span>
+              <span className="sm:hidden">Template</span>
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setShowImport(true)}>
+              <Upload className="mr-1 h-4 w-4" />
+              <span className="hidden sm:inline">Import Excel</span>
+              <span className="sm:hidden">Import</span>
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleExport}>
+              <FileSpreadsheet className="mr-1 h-4 w-4" />
+              <span className="hidden sm:inline">Export Excel</span>
+              <span className="sm:hidden">Export</span>
+            </Button>
+          </>
+        )}
       </PageHeader>
 
       <FilterCard>
@@ -301,16 +357,39 @@ function Masters({ masterType }) {
 
               {config.extraFields.map((field) => (
                 <div className="space-y-2" key={field.key}>
-                  <Label htmlFor={`field-${field.key}`}>{field.label}</Label>
-                  <Input
-                    id={`field-${field.key}`}
-                    type={field.type}
-                    value={form[field.key]}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, [field.key]: e.target.value }))
-                    }
-                    placeholder={field.placeholder}
-                  />
+                  <Label htmlFor={`field-${field.key}`}>
+                    {field.label}
+                    {field.required ? <span className="text-red-500"> *</span> : null}
+                  </Label>
+                  {field.type === "category-select" ? (
+                    <Select
+                      value={form[field.key] ? String(form[field.key]) : ""}
+                      onValueChange={(v) =>
+                        setForm((prev) => ({ ...prev, [field.key]: v }))
+                      }
+                    >
+                      <SelectTrigger id={`field-${field.key}`}>
+                        <SelectValue placeholder={field.placeholder} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((c) => (
+                          <SelectItem key={c.id} value={String(c.id)}>
+                            {c.category_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input
+                      id={`field-${field.key}`}
+                      type={field.type}
+                      value={form[field.key]}
+                      onChange={(e) =>
+                        setForm((prev) => ({ ...prev, [field.key]: e.target.value }))
+                      }
+                      placeholder={field.placeholder}
+                    />
+                  )}
                 </div>
               ))}
 
@@ -362,7 +441,11 @@ function Masters({ masterType }) {
             <TableCell className="text-center text-slate-500">{idx + 1}</TableCell>
             <TableCell className="font-medium">{record[config.nameField]}</TableCell>
             {config.extraFields.map((f) => (
-              <TableCell key={f.key}>{record[f.key] || "-"}</TableCell>
+              <TableCell key={f.key}>
+                {f.type === "category-select"
+                  ? categoryLabel(record[f.key])
+                  : record[f.key] || "-"}
+              </TableCell>
             ))}
             <TableCell>
               <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -399,7 +482,7 @@ function Masters({ masterType }) {
         )}
       />
 
-      {showImport && (
+      {showImport && meta && (
         <ExcelImport
           masterType={masterType}
           existingRecords={records}

@@ -53,6 +53,7 @@ function App() {
       {currentPage === "reports" && <Reports />}
 
       {currentPage === "categories" && <Masters masterType="categories" />}
+      {currentPage === "subcategories" && <Masters masterType="subcategories" />}
       {currentPage === "departments" && <Masters masterType="departments" />}
       {currentPage === "vendors" && <Masters masterType="vendors" />}
       {currentPage === "locations" && <Masters masterType="locations" />}

@@ -102,37 +102,38 @@ function Dashboard({ setCurrentPage }) {
       counts[name] = (counts[name] || 0) + 1;
     });
 
-    const fromAssets = Object.entries(counts)
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count);
-
-    // Prefer known categories with counts; pad from master list up to 4
     const palette = [
       { hex: "#0f6b6d", light: "#d8f0f0" },
       { hex: "#2563eb", light: "#dbe7fe" },
       { hex: "#7c3aed", light: "#ebe4ff" },
       { hex: "#ea580c", light: "#ffe8d6" },
+      { hex: "#059669", light: "#d1fae5" },
+      { hex: "#db2777", light: "#fce7f3" },
+      { hex: "#ca8a04", light: "#fef3c7" },
+      { hex: "#0891b2", light: "#cffafe" },
+      { hex: "#4f46e5", light: "#e0e7ff" },
+      { hex: "#dc2626", light: "#fee2e2" },
+      { hex: "#65a30d", light: "#ecfccb" },
+      { hex: "#9333ea", light: "#f3e8ff" },
     ];
 
-    const picked = [];
-    const seen = new Set();
-    for (const item of fromAssets) {
-      if (picked.length >= 4) break;
-      picked.push(item);
-      seen.add(item.name.toLowerCase());
-    }
-    for (const c of categories) {
-      if (picked.length >= 4) break;
-      const key = String(c.category_name).toLowerCase();
-      if (seen.has(key)) continue;
-      picked.push({ name: c.category_name, count: counts[c.category_name] || 0 });
-      seen.add(key);
+    // Show every category from masters (plus Unassigned if any), sorted by count
+    const fromMaster = (categories || []).map((c) => ({
+      name: c.category_name,
+      count: counts[c.category_name] || 0,
+    }));
+    const masterNames = new Set(fromMaster.map((c) => c.name.toLowerCase()));
+    if (counts.Unassigned && !masterNames.has("unassigned")) {
+      fromMaster.push({ name: "Unassigned", count: counts.Unassigned });
     }
 
-    return picked.slice(0, 4).map((item, i) => ({
-      ...item,
-      ...palette[i % palette.length],
-    }));
+    return fromMaster
+      .filter((item) => item.count > 0)
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+      .map((item, i) => ({
+        ...item,
+        ...palette[i % palette.length],
+      }));
   }, [allAssets, categoryNameById, categories]);
 
   const deptDistribution = useMemo(() => {
@@ -294,8 +295,8 @@ function Dashboard({ setCurrentPage }) {
         })}
       </div>
 
-      {/* Category totals — white medium cards */}
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      {/* Category totals — all categories */}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
         {categoryTotals.map((cat) => (
           <div
             key={cat.name}

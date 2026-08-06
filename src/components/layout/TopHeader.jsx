@@ -28,6 +28,7 @@ const pageMeta = {
   maintenance: { title: "Maintenance", subtitle: "Service & repairs" },
   reports: { title: "Reports", subtitle: "Analytics & exports" },
   categories: { title: "Categories", subtitle: "Master data" },
+  subcategories: { title: "Sub Categories", subtitle: "Types under each category" },
   departments: { title: "Departments", subtitle: "Master data" },
   vendors: { title: "Vendors", subtitle: "Master data" },
   locations: { title: "Locations", subtitle: "Master data" },

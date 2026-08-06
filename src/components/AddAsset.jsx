@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 
 function AddAsset({ setCurrentPage }) {
   const [categories, setCategories] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
   const [locations, setLocations] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [vendors, setVendors] = useState([]);
@@ -19,6 +20,7 @@ function AddAsset({ setCurrentPage }) {
       setLoading(true);
       const masters = await loadMasterData();
       setCategories(masters.categories);
+      setSubcategories(masters.subcategories || []);
       setLocations(masters.locations);
       setDepartments(masters.departments);
       setVendors(masters.vendors);
@@ -42,6 +44,7 @@ function AddAsset({ setCurrentPage }) {
   return (
     <AssetForm
       categories={categories}
+      subcategories={subcategories}
       locations={locations}
       departments={departments}
       vendors={vendors}

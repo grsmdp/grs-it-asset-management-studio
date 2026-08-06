@@ -48,15 +48,51 @@ export async function getVendors() {
   return data;
 }
 
+export async function getSubcategories() {
+  const { data, error } = await supabase
+    .from("asset_subcategories")
+    .select("*")
+    .order("subcategory_name");
+
+  if (error) throw error;
+
+  return data || [];
+}
+
+export async function createSubcategory(record) {
+  const { data, error } = await supabase
+    .from("asset_subcategories")
+    .insert([record])
+    .select();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateSubcategory(id, record) {
+  const { data, error } = await supabase
+    .from("asset_subcategories")
+    .update(record)
+    .eq("id", id)
+    .select();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteSubcategory(id) {
+  const { error } = await supabase.from("asset_subcategories").delete().eq("id", id);
+  if (error) throw error;
+}
+
 export async function loadMasterData() {
-  const [categories, locations, departments, vendors] = await Promise.all([
+  const [categories, locations, departments, vendors, subcategories] = await Promise.all([
     getCategories(),
     getLocations(),
     getDepartments(),
     getVendors(),
+    getSubcategories().catch(() => []),
   ]);
 
-  return { categories, locations, departments, vendors };
+  return { categories, locations, departments, vendors, subcategories };
 }
 
 /* ==========================================================
@@ -229,23 +265,29 @@ export async function generateAssetCode(categoryId) {
 }
 
 function buildAssetPayload(formData) {
+  const toId = (v) => {
+    if (v === "" || v === null || v === undefined) return null;
+    const n = Number(v);
+    return Number.isNaN(n) ? null : n;
+  };
+
   return {
     asset_code: formData.asset_code,
     asset_name: formData.asset_name,
-    category_id: formData.category_id,
-    subcategory_id: formData.subcategory_id || null,
+    category_id: toId(formData.category_id),
+    subcategory_id: toId(formData.subcategory_id),
     brand: formData.brand || null,
     model: formData.model || null,
     serial_number: formData.serial_number || null,
-    vendor_id: formData.vendor_id || null,
+    vendor_id: toId(formData.vendor_id),
     purchase_date: formData.purchase_date || null,
     purchase_cost:
       formData.purchase_cost === "" || formData.purchase_cost == null
         ? null
         : Number(formData.purchase_cost),
     warranty_expiry: formData.warranty_expiry || null,
-    department_id: formData.department_id || null,
-    current_location_id: formData.current_location_id,
+    department_id: toId(formData.department_id),
+    current_location_id: toId(formData.current_location_id),
     status: formData.status,
     remarks: formData.remarks || null,
   };

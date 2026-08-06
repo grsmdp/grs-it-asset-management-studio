@@ -79,24 +79,54 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Main content scrollbar */
 .app-content::-webkit-scrollbar,
-main::-webkit-scrollbar {
-  width: 6px;
+main::-webkit-scrollbar,
+.overflow-auto::-webkit-scrollbar,
+.table-scroll-area::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
 }
 
 .app-content::-webkit-scrollbar-track,
-main::-webkit-scrollbar-track {
-  background: transparent;
+main::-webkit-scrollbar-track,
+.overflow-auto::-webkit-scrollbar-track,
+.table-scroll-area::-webkit-scrollbar-track {
+  background: #e2e8f0;
+  border-radius: 5px;
 }
 
 .app-content::-webkit-scrollbar-thumb,
-main::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
+main::-webkit-scrollbar-thumb,
+.overflow-auto::-webkit-scrollbar-thumb,
+.table-scroll-area::-webkit-scrollbar-thumb {
+  background: #64748b;
+  border-radius: 5px;
+  border: 2px solid #e2e8f0;
 }
 
 .app-content::-webkit-scrollbar-thumb:hover,
-main::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+main::-webkit-scrollbar-thumb:hover,
+.overflow-auto::-webkit-scrollbar-thumb:hover,
+.table-scroll-area::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+.app-content::-webkit-scrollbar-corner,
+main::-webkit-scrollbar-corner,
+.overflow-auto::-webkit-scrollbar-corner,
+.table-scroll-area::-webkit-scrollbar-corner {
+  background: #e2e8f0;
+}
+
+/* Fixed-height table viewport: bottom + side scrollbars always on the visible panel */
+.table-scroll-area {
+  height: min(65vh, 720px);
+  max-height: min(65vh, 720px);
+  overflow-x: scroll !important;
+  overflow-y: scroll !important;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable both-edges;
+  scrollbar-width: auto;
+  scrollbar-color: #64748b #e2e8f0;
 }
 
 /* Sidebar scrollbar */

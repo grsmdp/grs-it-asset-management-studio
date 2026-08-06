@@ -37,6 +37,7 @@ function AssetForm({
   assetId,
   initialData,
   categories,
+  subcategories = [],
   locations,
   departments,
   vendors,
@@ -47,6 +48,12 @@ function AssetForm({
   const [saving, setSaving] = useState(false);
   const isEdit = mode === "edit";
 
+  const filteredSubcategories = subcategories.filter(
+    (s) =>
+      String(s.category_id) === String(formData.category) &&
+      s.is_active !== false
+  );
+
   useEffect(() => {
     if (initialData) {
       setFormData(initialData);
@@ -56,18 +63,6 @@ function AssetForm({
   async function handleChange(e) {
     const { name, value } = e.target;
 
-    if (name === "category" && !isEdit) {
-      const code = await generateAssetCode(value);
-
-      setFormData((prev) => ({
-        ...prev,
-        category: value,
-        assetCode: code,
-      }));
-
-      return;
-    }
-
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -75,15 +70,23 @@ function AssetForm({
   }
 
   async function handleSelectChange(name, value) {
-    if (name === "category" && !isEdit) {
-      const code = await generateAssetCode(value);
+    if (name === "category") {
+      if (!isEdit) {
+        const code = await generateAssetCode(value);
+        setFormData((prev) => ({
+          ...prev,
+          category: value,
+          subCategory: "",
+          assetCode: code,
+        }));
+        return;
+      }
 
       setFormData((prev) => ({
         ...prev,
         category: value,
-        assetCode: code,
+        subCategory: "",
       }));
-
       return;
     }
 
@@ -201,6 +204,44 @@ function AssetForm({
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-slate-500">
+                  Sub Category
+                </Label>
+                <Select
+                  value={formData.subCategory ? String(formData.subCategory) : "__none__"}
+                  onValueChange={(v) =>
+                    handleSelectChange("subCategory", v === "__none__" ? "" : v)
+                  }
+                  disabled={!formData.category}
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={
+                        formData.category
+                          ? filteredSubcategories.length
+                            ? "Select Sub Category"
+                            : "No sub categories for this category"
+                          : "Select category first"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">None</SelectItem>
+                    {filteredSubcategories.map((s) => (
+                      <SelectItem key={s.id} value={String(s.id)}>
+                        {s.subcategory_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {formData.category && filteredSubcategories.length === 0 && (
+                  <p className="text-[11px] text-slate-400">
+                    Add types under Settings → Sub Categories (e.g. Dome, Bullet, Laser).
+                  </p>
+                )}
               </div>
 
               <div className="space-y-1.5">
